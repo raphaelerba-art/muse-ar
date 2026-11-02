@@ -271,26 +271,39 @@ const applyColors = (state: State, meshes: Record<string, any>, t: number) => {
   state.sweepMaterial?.color.setHex(white)
 }
 
-// Logo overlay, fixed on screen once the camera is running (not over the landing / permission UI).
+// Logo overlay linking to the site, fixed on screen once the camera is running
+// (not over the landing / permission UI). Opens in a new tab so the AR page stays open.
 const showLogo = () => {
   if (document.getElementById('muse-logo')) {
     return
   }
-  const logo = document.createElement('img')
-  logo.id = 'muse-logo'
-  logo.src = logoUrl
-  logo.alt = ''
-  Object.assign(logo.style, {
+  const link = document.createElement('a')
+  link.id = 'muse-logo'
+  link.href = 'https://raphaelerba.art'
+  link.target = '_blank'
+  link.rel = 'noopener'
+  link.setAttribute('aria-label', 'raphaelerba.art')
+  Object.assign(link.style, {
     position: 'fixed',
     top: 'calc(env(safe-area-inset-top) + 12px)',
     left: 'calc(env(safe-area-inset-left) + 12px)',
     width: '15vw',
     maxWidth: '120px',
-    opacity: '0.8',
-    pointerEvents: 'none',
+    minWidth: '44px',
     zIndex: '10',
+    display: 'block',
+    WebkitTapHighlightColor: 'transparent',
   })
-  document.body.appendChild(logo)
+  // Keep the tap from reaching the scene's input handlers.
+  for (const type of ['touchstart', 'touchend', 'pointerdown', 'pointerup', 'mousedown', 'mouseup']) {
+    link.addEventListener(type, e => e.stopPropagation())
+  }
+  const logo = document.createElement('img')
+  logo.src = logoUrl
+  logo.alt = ''
+  Object.assign(logo.style, {width: '100%', display: 'block', opacity: '0.8'})
+  link.appendChild(logo)
+  document.body.appendChild(link)
 }
 
 ecs.registerComponent({
