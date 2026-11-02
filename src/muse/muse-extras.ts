@@ -1,32 +1,35 @@
 import * as ecs from '@8thwall/ecs'
-import trailBinUrl from '../assets/muse/trail.bin'
+import animBinUrl from '../assets/muse/muse_anim.bin'
 
 // Same look as the MindAR web version (web/video.html) and the Unity app (MuseAR.cs):
-// Muse's shadow on the video and her hair trails, both driven by the video's playback time.
+// Muse's shadow on the video, and her animation driven by the video's playback time.
 // Target space: the full square image is 1 x 1, +Z toward the viewer.
 
 declare const THREE: any
 
-const CLIP_DURATION = 8        // muse_anim length, in seconds
+const CLIP_DURATION = 8        // seconds, Muse-new.c4d frames 0-240 @ 30 fps
 const SHADOW_OPACITY = 0.35
 
-// From web/trail.json (baked by the C4D export).
-const TRAIL_INFO = {
-  frames: 481,
-  points: 43,
-  fps: 60,
-  radius_cm: 5.0,
-  amountKeys: [[0, 1], [20, 20]],
+// Muse-new is deformed by a Spline Wrap and a Twist, which glTF can't express, so its final
+// mesh is baked per frame (scratchpad bake_muse_new.py) into muse_anim.bin:
+//   "MVA1", uint32 frames, float32 fps, uint32 vertices,
+//   then per frame: float32 min[3], scale[3] + uint16 xyz per vertex.
+// Vertex order: the "muse_white" mesh, then "muse_black", as in muse.glb.
+const ANIM_MESHES = ['muse_white', 'muse_black']
+
+type VertexAnimation = {
+  frames: number
+  fps: number
+  vertices: number
+  view: DataView
 }
 
 type State = {
   ready: boolean
   sun?: any
   shadowScale: number
-  trailInfo?: typeof TRAIL_INFO
-  trailData?: Float32Array
-  trailMeshes: any[]
-  lastTrailFrame: number
+  anim?: VertexAnimation
+  lastTime: number
   video?: HTMLVideoElement
 }
 
@@ -41,6 +44,20 @@ const findVideo = (object: any): HTMLVideoElement | undefined => {
     }
   })
   return found
+}
+
+const parseAnimation = (buffer: ArrayBuffer): VertexAnimation => {
+  const view = new DataView(buffer)
+  const magic = String.fromCharCode(...new Uint8Array(buffer, 0, 4))
+  if (magic !== 'MVA1') {
+    throw new Error(`unexpected header ${magic}`)
+  }
+  return {
+    frames: view.getUint32(4, true),
+    fps: view.getFloat32(8, true),
+    vertices: view.getUint32(12, true),
+    view,
+  }
 }
 
 const setup = (world: ecs.World, eid: ecs.Eid, museEid: ecs.Eid, state: State) => {
@@ -73,31 +90,11 @@ const setup = (world: ecs.World, eid: ecs.Eid, museEid: ecs.Eid, state: State) =
   stage.add(sun, sun.target)
   state.sun = sun
 
-  // Hair trails (C4D Sweep + Tracer), rebuilt live from baked hair-vertex positions.
-  // C4D cm (left-handed) -> glTF metres, under Muse's pivot like the model itself.
-  const trailGroup = new THREE.Group()
-  trailGroup.scale.set(0.01, 0.01, -0.01)
-  muse.add(trailGroup)
-  const trailMaterial = new THREE.MeshBasicMaterial({
-    color: 0xffffff, side: THREE.DoubleSide, toneMapped: false,
-  })
-
-  fetch(trailBinUrl).then(r => r.arrayBuffer()).then((buffer) => {
-    const info = TRAIL_INFO
-    state.trailInfo = info
-    state.trailData = new Float32Array(buffer)
-    for (let i = 0; i < info.points; i++) {
-      const mesh = new THREE.Mesh(new THREE.BufferGeometry(), trailMaterial)
-      mesh.frustumCulled = false
-      mesh.castShadow = true
-      trailGroup.add(mesh)
-      state.trailMeshes.push(mesh)
-    }
-    world.three.notifyChanged(trailGroup)
-  }).catch(err => console.error('Muse trails:', err))
+  fetch(animBinUrl).then(r => r.arrayBuffer()).then((buffer) => {
+    state.anim = parseAnimation(buffer)
+  }).catch(err => console.error('Muse animation:', err))
 
   world.three.notifyChanged(stage)
-  world.three.notifyChanged(muse)
   state.ready = true
 }
 
@@ -116,45 +113,51 @@ const fitShadow = (state: State) => {
 
 // The glTF loads asynchronously and the engine may rebuild it, so this is re-applied every frame.
 const prepareMuseMeshes = (world: ecs.World, museEid: ecs.Eid) => {
+  const meshes = {}
   world.three.entityToObject.get(museEid)?.traverse((o: any) => {
     if (o.isMesh) {
       o.castShadow = true
       o.frustumCulled = false
+      meshes[o.name] = o
     }
   })
+  return meshes
 }
 
-const updateTrails = (state: State, t: number) => {
-  const {trailInfo: info, trailData: data} = state
-  if (!info || !data) {
-    return
+// Writes the baked positions at time t (linear blend between the two nearest baked frames).
+const applyAnimation = (anim: VertexAnimation, meshes: Record<string, any>, t: number) => {
+  const targets = ANIM_MESHES.map(name => meshes[name])
+  if (targets.some(m => !m)) {
+    return false
   }
-  const F = info.frames
-  const P = info.points
-  const f = Math.min(F - 1, Math.floor(t * info.fps))
-  if (f === state.lastTrailFrame) {
-    return
-  }
-  state.lastTrailFrame = f
-  const [[f0, a0], [f1, a1]] = info.amountKeys
-  const amount = Math.round(f <= f0 ? a0 : f >= f1 ? a1 : a0 + ((a1 - a0) * (f - f0)) / (f1 - f0))
-  const start = Math.max(0, f - amount)
-  for (let i = 0; i < P; i++) {
-    const mesh = state.trailMeshes[i]
-    mesh.geometry.dispose()
-    if (f - start < 1) {
-      mesh.geometry = new THREE.BufferGeometry()
-      continue
+  const {view, vertices} = anim
+  const frameBytes = 24 + vertices * 6
+  const f = Math.min(anim.frames - 1, Math.max(0, t * anim.fps))
+  const f0 = Math.floor(f)
+  const f1 = Math.min(anim.frames - 1, f0 + 1)
+  const blend = f - f0
+  const o0 = 16 + f0 * frameBytes
+  const o1 = 16 + f1 * frameBytes
+  const min0 = [0, 1, 2].map(a => view.getFloat32(o0 + a * 4, true))
+  const scale0 = [0, 1, 2].map(a => view.getFloat32(o0 + 12 + a * 4, true))
+  const min1 = [0, 1, 2].map(a => view.getFloat32(o1 + a * 4, true))
+  const scale1 = [0, 1, 2].map(a => view.getFloat32(o1 + 12 + a * 4, true))
+
+  let v = 0
+  for (const mesh of targets) {
+    const attribute = mesh.geometry.attributes.position
+    const out = attribute.array
+    for (let i = 0; i < attribute.count; i++, v++) {
+      for (let a = 0; a < 3; a++) {
+        const p0 = min0[a] + view.getUint16(o0 + 24 + (v * 3 + a) * 2, true) * scale0[a]
+        const p1 = min1[a] + view.getUint16(o1 + 24 + (v * 3 + a) * 2, true) * scale1[a]
+        out[i * 3 + a] = p0 + (p1 - p0) * blend
+      }
     }
-    const pts = []
-    for (let k = start; k <= f; k++) {
-      const o = (k * P + i) * 3
-      pts.push(new THREE.Vector3(data[o], data[o + 1], data[o + 2]))
-    }
-    mesh.geometry = new THREE.TubeGeometry(
-      new THREE.CatmullRomCurve3(pts), pts.length * 2, info.radius_cm, 6, false
-    )
+    attribute.needsUpdate = true
+    mesh.geometry.computeBoundingSphere()
   }
+  return true
 }
 
 ecs.registerComponent({
@@ -166,9 +169,7 @@ ecs.registerComponent({
     videoPlayer: ecs.eid,
   },
   add: (world, component) => {
-    states.set(component.eid, {
-      ready: false, shadowScale: 0, trailMeshes: [], lastTrailFrame: -1,
-    })
+    states.set(component.eid, {ready: false, shadowScale: 0, lastTime: -1})
   },
   remove: (world, component) => {
     states.delete(component.eid)
@@ -187,17 +188,16 @@ ecs.registerComponent({
     }
 
     fitShadow(state)
-    prepareMuseMeshes(world, muse)
+    const meshes = prepareMuseMeshes(world, muse)
 
     state.video = state.video || findVideo(world.three.entityToObject.get(videoPlayer))
-    if (!state.video) {
+    if (!state.video || !state.anim) {
       return
     }
-    // Muse's animation and the trails follow the video, as in the Unity and MindAR versions.
+    // Muse's animation follows the video, as in the Unity and MindAR versions.
     const t = state.video.currentTime % CLIP_DURATION
-    ecs.GltfModel.mutate(world, muse, (c) => {
-      c.time = t
-    })
-    updateTrails(state, t)
+    if (t !== state.lastTime && applyAnimation(state.anim, meshes, t)) {
+      state.lastTime = t
+    }
   },
 })

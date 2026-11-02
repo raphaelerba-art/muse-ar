@@ -2138,7 +2138,7 @@
           "type": "asset",
           "asset": "assets/muse/muse.glb"
         },
-        "animationClip": "muse_anim",
+        "animationClip": "",
         "loop": true
       },
       "shadow": {
