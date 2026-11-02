@@ -1,6 +1,7 @@
 import * as ecs from '@8thwall/ecs'
 import animBinUrl from '../assets/muse/muse_anim.bin'
 import sweepsBinUrl from '../assets/muse/muse_sweeps.bin'
+import logoUrl from '../assets/muse/logo.png'
 
 // Same look as the MindAR web version (web/video.html) and the Unity app (MuseAR.cs):
 // Muse's shadow on the video, and her animation driven by the video's playback time.
@@ -270,6 +271,28 @@ const applyColors = (state: State, meshes: Record<string, any>, t: number) => {
   state.sweepMaterial?.color.setHex(white)
 }
 
+// Logo overlay, fixed on screen once the camera is running (not over the landing / permission UI).
+const showLogo = () => {
+  if (document.getElementById('muse-logo')) {
+    return
+  }
+  const logo = document.createElement('img')
+  logo.id = 'muse-logo'
+  logo.src = logoUrl
+  logo.alt = ''
+  Object.assign(logo.style, {
+    position: 'fixed',
+    top: 'calc(env(safe-area-inset-top) + 12px)',
+    left: 'calc(env(safe-area-inset-left) + 12px)',
+    width: '15vw',
+    maxWidth: '120px',
+    opacity: '0.8',
+    pointerEvents: 'none',
+    zIndex: '10',
+  })
+  document.body.appendChild(logo)
+}
+
 ecs.registerComponent({
   name: 'Muse Extras',
   schema: {
@@ -280,6 +303,7 @@ ecs.registerComponent({
   },
   add: (world, component) => {
     states.set(component.eid, {ready: false, shadowScale: 0, lastTime: -1})
+    world.events.addListener(world.events.globalId, 'realityready', showLogo)
   },
   remove: (world, component) => {
     states.delete(component.eid)
