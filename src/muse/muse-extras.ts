@@ -23,7 +23,6 @@ type State = {
   ready: boolean
   sun?: any
   shadowScale: number
-  museMeshesReady: boolean
   trailInfo?: typeof TRAIL_INFO
   trailData?: Float32Array
   trailMeshes: any[]
@@ -115,19 +114,14 @@ const fitShadow = (state: State) => {
   sun.shadow.camera.updateProjectionMatrix()
 }
 
-// The glTF loads asynchronously: make its meshes cast shadows once they exist.
-const prepareMuseMeshes = (world: ecs.World, museEid: ecs.Eid, state: State) => {
-  const muse = world.three.entityToObject.get(museEid)
-  let meshes = 0
-  muse?.traverse((o: any) => {
-    if (o.isMesh || o.isSkinnedMesh) {
+// The glTF loads asynchronously and the engine may rebuild it, so this is re-applied every frame.
+const prepareMuseMeshes = (world: ecs.World, museEid: ecs.Eid) => {
+  world.three.entityToObject.get(museEid)?.traverse((o: any) => {
+    if (o.isMesh) {
       o.castShadow = true
       o.frustumCulled = false
-      meshes++
     }
   })
-  // The trail meshes are added up front, so wait for more than those.
-  state.museMeshesReady = meshes > state.trailMeshes.length
 }
 
 const updateTrails = (state: State, t: number) => {
@@ -173,7 +167,7 @@ ecs.registerComponent({
   },
   add: (world, component) => {
     states.set(component.eid, {
-      ready: false, shadowScale: 0, museMeshesReady: false, trailMeshes: [], lastTrailFrame: -1,
+      ready: false, shadowScale: 0, trailMeshes: [], lastTrailFrame: -1,
     })
   },
   remove: (world, component) => {
@@ -193,9 +187,7 @@ ecs.registerComponent({
     }
 
     fitShadow(state)
-    if (!state.museMeshesReady) {
-      prepareMuseMeshes(world, muse, state)
-    }
+    prepareMuseMeshes(world, muse)
 
     state.video = state.video || findVideo(world.three.entityToObject.get(videoPlayer))
     if (!state.video) {

@@ -2139,6 +2139,10 @@
         },
         "animationClip": "muse_anim",
         "loop": true
+      },
+      "shadow": {
+        "castShadow": true,
+        "receiveShadow": false
       }
     }
   },
