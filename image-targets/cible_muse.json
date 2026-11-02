@@ -1,0 +1,24 @@
+{
+  "imagePath": "image-targets/cible_muse_luminance.png",
+  "resources": {
+    "originalImage": "cible_muse_original.png",
+    "croppedImage": "cible_muse_cropped.png",
+    "thumbnailImage": "cible_muse_thumbnail.png",
+    "luminanceImage": "cible_muse_luminance.png"
+  },
+  "name": "cible_muse",
+  "type": "PLANAR",
+  "properties": {
+    "top": 0,
+    "left": 270,
+    "width": 1620,
+    "height": 2160,
+    "isRotated": false,
+    "originalWidth": 2160,
+    "originalHeight": 2160
+  },
+  "loadAutomatically": true,
+  "created": 1793605279068,
+  "updated": 1793605279068,
+  "metadata": null
+}

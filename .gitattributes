@@ -1,0 +1,1 @@
+# Plain git (no LFS): every file is well under GitHub's 100 MB limit, and LFS bandwidth quotas would be consumed by each Pages build.
