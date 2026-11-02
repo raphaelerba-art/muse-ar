@@ -9,7 +9,6 @@ declare const THREE: any
 
 const CLIP_DURATION = 8        // seconds, Muse-new.c4d frames 0-240 @ 30 fps
 const SHADOW_OPACITY = 0.35
-const MUSE_SIZE = 2            // character scale around her centre (1 = as in Muse-new.c4d)
 
 // Muse-new is deformed by a Spline Wrap and a Twist, which glTF can't express, so its final
 // mesh is baked per frame (scratchpad bake_muse_new.py) into muse_anim.bin:
@@ -143,13 +142,6 @@ const applyAnimation = (anim: VertexAnimation, meshes: Record<string, any>, t: n
   const scale0 = [0, 1, 2].map(a => view.getFloat32(o0 + 12 + a * 4, true))
   const min1 = [0, 1, 2].map(a => view.getFloat32(o1 + a * 4, true))
   const scale1 = [0, 1, 2].map(a => view.getFloat32(o1 + 12 + a * 4, true))
-  // Muse is enlarged around her own centre (the frame's bounding-box centre), so her path is unchanged.
-  const centre = [0, 1, 2].map((a) => {
-    const c0 = min0[a] + scale0[a] * 32767.5
-    const c1 = min1[a] + scale1[a] * 32767.5
-    return c0 + (c1 - c0) * blend
-  })
-
   let v = 0
   for (const mesh of targets) {
     const attribute = mesh.geometry.attributes.position
@@ -158,7 +150,7 @@ const applyAnimation = (anim: VertexAnimation, meshes: Record<string, any>, t: n
       for (let a = 0; a < 3; a++) {
         const p0 = min0[a] + view.getUint16(o0 + 24 + (v * 3 + a) * 2, true) * scale0[a]
         const p1 = min1[a] + view.getUint16(o1 + 24 + (v * 3 + a) * 2, true) * scale1[a]
-        out[i * 3 + a] = centre[a] + (p0 + (p1 - p0) * blend - centre[a]) * MUSE_SIZE
+        out[i * 3 + a] = p0 + (p1 - p0) * blend
       }
     }
     attribute.needsUpdate = true
