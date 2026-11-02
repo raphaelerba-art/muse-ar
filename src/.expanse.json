@@ -2047,6 +2047,20 @@
             },
             "imageTargetName": "cible_muse"
           }
+        },
+        "10fd8a87-0bd6-4959-b780-374a7cc8a713": {
+          "id": "10fd8a87-0bd6-4959-b780-374a7cc8a713",
+          "name": "Muse Extras",
+          "parameters": {
+            "muse": {
+              "type": "entity",
+              "id": "71ac5811-4cfc-4edd-8810-3a83167f50fc"
+            },
+            "videoPlayer": {
+              "type": "entity",
+              "id": "6bbd24b5-5096-44f1-9ccc-609de29d35bf"
+            }
+          }
         }
       },
       "imageTarget": {
