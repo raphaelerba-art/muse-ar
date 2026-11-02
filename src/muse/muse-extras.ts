@@ -10,6 +10,9 @@ declare const THREE: any
 
 const CLIP_DURATION = 8        // seconds, Muse-new.c4d frames 0-240 @ 30 fps
 const SHADOW_OPACITY = 0.35
+// Muse's black and white are swapped over these scene frames (30 fps, inclusive).
+const INVERT_FRAMES = [150, 210]
+const SCENE_FPS = 30
 
 // Muse-new is deformed by a Spline Wrap and a Twist, which glTF can't express, so its final
 // mesh is baked per frame (scratchpad bake_muse_new.py) into muse_anim.bin:
@@ -44,6 +47,7 @@ type State = {
   shadowScale: number
   anim?: VertexAnimation
   sweeps?: SweepAnimation
+  sweepMaterial?: any
   lastTime: number
   video?: HTMLVideoElement
 }
@@ -146,6 +150,7 @@ const setup = (world: ecs.World, eid: ecs.Eid, museEid: ecs.Eid, state: State) =
   const sweepMaterial = new THREE.MeshBasicMaterial({
     color: 0xffffff, side: THREE.DoubleSide, toneMapped: false,
   })
+  state.sweepMaterial = sweepMaterial
   fetch(sweepsBinUrl).then(r => r.arrayBuffer()).then((buffer) => {
     const parsed = parseSweeps(buffer)
     const segments = Math.max(0, ...parsed.frames.map(f => f.reduce((n, s) => n + s.segments.length, 0)))
@@ -255,6 +260,16 @@ const applySweeps = (sweeps: SweepAnimation, t: number) => {
   }
 }
 
+const applyColors = (state: State, meshes: Record<string, any>, t: number) => {
+  const frame = Math.floor(t * SCENE_FPS + 1e-6)
+  const inverted = frame >= INVERT_FRAMES[0] && frame <= INVERT_FRAMES[1]
+  const white = inverted ? 0x000000 : 0xffffff
+  const black = inverted ? 0xffffff : 0x000000
+  meshes.muse_white?.material.color.setHex(white)
+  meshes.muse_black?.material.color.setHex(black)
+  state.sweepMaterial?.color.setHex(white)
+}
+
 ecs.registerComponent({
   name: 'Muse Extras',
   schema: {
@@ -297,5 +312,6 @@ ecs.registerComponent({
     if (state.sweeps) {
       applySweeps(state.sweeps, t)
     }
+    applyColors(state, meshes, t)
   },
 })
