@@ -1,5 +1,6 @@
 import * as ecs from '@8thwall/ecs'
 import animBinUrl from '../assets/muse/muse_anim.bin'
+import sweepsBinUrl from '../assets/muse/muse_sweeps.bin'
 
 // Same look as the MindAR web version (web/video.html) and the Unity app (MuseAR.cs):
 // Muse's shadow on the video, and her animation driven by the video's playback time.
@@ -17,6 +18,19 @@ const SHADOW_OPACITY = 0.35
 // Vertex order: the "muse_white" mesh, then "muse_black", as in muse.glb.
 const ANIM_MESHES = ['muse_white', 'muse_black']
 
+// The top-level Sweep (Circle along a Tracer of "n-Side") changes topology every frame, so its
+// trails are baked instead (muse_sweeps.bin) and rebuilt as tubes:
+//   "MSW1", uint32 frames, float32 fps, uint32 sweeps; per frame and sweep:
+//   float32 radius (m), uint16 segments, per segment uint16 points + float32 xyz.
+type SweepFrame = {radius: number, segments: Float32Array[]}[]
+
+type SweepAnimation = {
+  fps: number
+  frames: SweepFrame[]
+  meshes: any[]
+  lastFrame: number
+}
+
 type VertexAnimation = {
   frames: number
   fps: number
@@ -29,6 +43,7 @@ type State = {
   sun?: any
   shadowScale: number
   anim?: VertexAnimation
+  sweeps?: SweepAnimation
   lastTime: number
   video?: HTMLVideoElement
 }
@@ -58,6 +73,37 @@ const parseAnimation = (buffer: ArrayBuffer): VertexAnimation => {
     vertices: view.getUint32(12, true),
     view,
   }
+}
+
+const parseSweeps = (buffer: ArrayBuffer): Omit<SweepAnimation, 'meshes' | 'lastFrame'> => {
+  const view = new DataView(buffer)
+  const magic = String.fromCharCode(...new Uint8Array(buffer, 0, 4))
+  if (magic !== 'MSW1') {
+    throw new Error(`unexpected header ${magic}`)
+  }
+  const count = view.getUint32(4, true)
+  const fps = view.getFloat32(8, true)
+  const sweeps = view.getUint32(12, true)
+  let o = 16
+  const frames = []
+  for (let f = 0; f < count; f++) {
+    const frame = []
+    for (let s = 0; s < sweeps; s++) {
+      const radius = view.getFloat32(o, true)
+      const segmentCount = view.getUint16(o + 4, true)
+      o += 6
+      const segments = []
+      for (let g = 0; g < segmentCount; g++) {
+        const points = view.getUint16(o, true)
+        o += 2
+        segments.push(new Float32Array(buffer.slice(o, o + points * 12)))
+        o += points * 12
+      }
+      frame.push({radius, segments})
+    }
+    frames.push(frame)
+  }
+  return {fps, frames}
 }
 
 const setup = (world: ecs.World, eid: ecs.Eid, museEid: ecs.Eid, state: State) => {
@@ -93,6 +139,27 @@ const setup = (world: ecs.World, eid: ecs.Eid, museEid: ecs.Eid, state: State) =
   fetch(animBinUrl).then(r => r.arrayBuffer()).then((buffer) => {
     state.anim = parseAnimation(buffer)
   }).catch(err => console.error('Muse animation:', err))
+
+  // Trail tubes live next to the glTF scene, in the same (baked) space.
+  const sweepGroup = new THREE.Group()
+  muse.add(sweepGroup)
+  const sweepMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffffff, side: THREE.DoubleSide, toneMapped: false,
+  })
+  fetch(sweepsBinUrl).then(r => r.arrayBuffer()).then((buffer) => {
+    const parsed = parseSweeps(buffer)
+    const segments = Math.max(0, ...parsed.frames.map(f => f.reduce((n, s) => n + s.segments.length, 0)))
+    const meshes = []
+    for (let i = 0; i < segments; i++) {
+      const mesh = new THREE.Mesh(new THREE.BufferGeometry(), sweepMaterial)
+      mesh.frustumCulled = false
+      mesh.castShadow = true
+      sweepGroup.add(mesh)
+      meshes.push(mesh)
+    }
+    state.sweeps = {...parsed, meshes, lastFrame: -1}
+    world.three.notifyChanged(sweepGroup)
+  }).catch(err => console.error('Muse sweeps:', err))
 
   world.three.notifyChanged(stage)
   state.ready = true
@@ -159,6 +226,35 @@ const applyAnimation = (anim: VertexAnimation, meshes: Record<string, any>, t: n
   return true
 }
 
+const applySweeps = (sweeps: SweepAnimation, t: number) => {
+  const f = Math.min(sweeps.frames.length - 1, Math.floor(t * sweeps.fps))
+  if (f === sweeps.lastFrame) {
+    return
+  }
+  sweeps.lastFrame = f
+  let m = 0
+  for (const {radius, segments} of sweeps.frames[f]) {
+    for (const points of segments) {
+      const mesh = sweeps.meshes[m++]
+      mesh.geometry.dispose()
+      const count = points.length / 3
+      if (radius <= 1e-5 || count < 2) {
+        mesh.geometry = new THREE.BufferGeometry()
+        continue
+      }
+      const curve = []
+      for (let i = 0; i < count; i++) {
+        curve.push(new THREE.Vector3(points[i * 3], points[i * 3 + 1], points[i * 3 + 2]))
+      }
+      mesh.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(curve), count * 2, radius, 8, false)
+    }
+  }
+  for (; m < sweeps.meshes.length; m++) {
+    sweeps.meshes[m].geometry.dispose()
+    sweeps.meshes[m].geometry = new THREE.BufferGeometry()
+  }
+}
+
 ecs.registerComponent({
   name: 'Muse Extras',
   schema: {
@@ -190,13 +286,16 @@ ecs.registerComponent({
     const meshes = prepareMuseMeshes(world, muse)
 
     state.video = state.video || findVideo(world.three.entityToObject.get(videoPlayer))
-    if (!state.video || !state.anim) {
+    if (!state.video) {
       return
     }
     // Muse's animation follows the video, as in the Unity and MindAR versions.
     const t = state.video.currentTime % CLIP_DURATION
-    if (t !== state.lastTime && applyAnimation(state.anim, meshes, t)) {
+    if (state.anim && t !== state.lastTime && applyAnimation(state.anim, meshes, t)) {
       state.lastTime = t
+    }
+    if (state.sweeps) {
+      applySweeps(state.sweeps, t)
     }
   },
 })
