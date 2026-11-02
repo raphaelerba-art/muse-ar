@@ -1982,7 +1982,8 @@
       "material": null,
       "components": {},
       "light": {
-        "type": "directional"
+        "type": "directional",
+        "castShadow": false
       }
     },
     "7ed187a3-8c4c-466e-bc19-8bffd9bf842c": {
