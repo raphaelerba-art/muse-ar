@@ -1,0 +1,24 @@
+{
+  "imagePath": "image-targets/sources_cible_luminance.png",
+  "resources": {
+    "originalImage": "sources_cible_original.png",
+    "croppedImage": "sources_cible_cropped.png",
+    "thumbnailImage": "sources_cible_thumbnail.png",
+    "luminanceImage": "sources_cible_luminance.png"
+  },
+  "name": "sources_cible",
+  "type": "PLANAR",
+  "properties": {
+    "top": 101,
+    "left": 0,
+    "width": 2480,
+    "height": 3307,
+    "isRotated": false,
+    "originalWidth": 2480,
+    "originalHeight": 3508
+  },
+  "loadAutomatically": true,
+  "created": 1793697927012,
+  "updated": 1793697927012,
+  "metadata": null
+}

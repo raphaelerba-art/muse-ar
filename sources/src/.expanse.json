@@ -1,0 +1,177 @@
+{
+  "objects": {
+    "622ad1ba-5017-4f59-b910-2f5528625778": {
+      "id": "622ad1ba-5017-4f59-b910-2f5528625778",
+      "name": "Camera",
+      "parentId": "6790b045-4dee-49a5-bf7b-e0dfe7ccc299",
+      "order": 0.5,
+      "position": [
+        0,
+        2,
+        0
+      ],
+      "rotation": [
+        0,
+        -1,
+        0,
+        6.123233995736766e-17
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "geometry": null,
+      "material": null,
+      "components": {},
+      "camera": {
+        "type": "perspective",
+        "xr": {
+          "xrCameraType": "world",
+          "phone": "AR",
+          "desktop": "3D",
+          "headset": "AR"
+        }
+      }
+    },
+    "8872fbc2-6f2a-4b56-93f4-13b34b099cdc": {
+      "id": "8872fbc2-6f2a-4b56-93f4-13b34b099cdc",
+      "name": "Directional Light",
+      "parentId": "6790b045-4dee-49a5-bf7b-e0dfe7ccc299",
+      "order": 1,
+      "position": [
+        5,
+        10,
+        5
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "geometry": null,
+      "material": null,
+      "components": {},
+      "light": {
+        "type": "directional",
+        "castShadow": false,
+        "intensity": 0.45
+      }
+    },
+    "03707121-1b48-4bc1-be8c-12bf0de7691f": {
+      "id": "03707121-1b48-4bc1-be8c-12bf0de7691f",
+      "name": "Ambient Light",
+      "parentId": "6790b045-4dee-49a5-bf7b-e0dfe7ccc299",
+      "order": 2,
+      "position": [
+        0,
+        5,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "geometry": null,
+      "material": null,
+      "components": {},
+      "light": {
+        "type": "ambient",
+        "intensity": 0.4
+      }
+    },
+    "47fe2d24-436e-4c28-9a28-f3e9fd53b30f": {
+      "id": "47fe2d24-436e-4c28-9a28-f3e9fd53b30f",
+      "name": "Plan A4",
+      "parentId": "6790b045-4dee-49a5-bf7b-e0dfe7ccc299",
+      "order": 3,
+      "position": [
+        0,
+        2,
+        -1.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "geometry": null,
+      "material": null,
+      "components": {},
+      "imageTarget": {
+        "name": "sources_cible"
+      }
+    },
+    "74e83928-cf4b-40c3-9429-6abf9a4fd468": {
+      "id": "74e83928-cf4b-40c3-9429-6abf9a4fd468",
+      "name": "Les Sources",
+      "parentId": "47fe2d24-436e-4c28-9a28-f3e9fd53b30f",
+      "order": 1,
+      "position": [
+        -3.6750127611293233,
+        -1.8712958948599596,
+        0
+      ],
+      "rotation": [
+        0.7071067811865476,
+        0,
+        0,
+        0.7071067811865476
+      ],
+      "scale": [
+        0.00034133179412231695,
+        0.00034133179412231695,
+        0.00034133179412231695
+      ],
+      "geometry": null,
+      "material": null,
+      "components": {},
+      "gltfModel": {
+        "src": {
+          "type": "asset",
+          "asset": "assets/sources/les_sources.glb"
+        },
+        "animationClip": "",
+        "loop": true
+      }
+    }
+  },
+  "spaces": {
+    "6790b045-4dee-49a5-bf7b-e0dfe7ccc299": {
+      "id": "6790b045-4dee-49a5-bf7b-e0dfe7ccc299",
+      "name": "Les Sources",
+      "activeCamera": "622ad1ba-5017-4f59-b910-2f5528625778",
+      "reflections": {
+        "type": "url",
+        "url": "https://cdn.8thwall.com/web/assets/envmap/basic_env_map-m9hqpneh.jpg"
+      }
+    }
+  },
+  "entrySpaceId": "6790b045-4dee-49a5-bf7b-e0dfe7ccc299",
+  "runtimeVersion": {
+    "type": "version",
+    "level": "major",
+    "major": 2,
+    "minor": 0,
+    "patch": 0
+  }
+}

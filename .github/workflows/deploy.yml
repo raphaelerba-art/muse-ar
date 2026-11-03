@@ -35,6 +35,14 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Build Les Sources (served at /sources/)
+        working-directory: sources
+        run: |
+          npm ci
+          npm run build
+          mkdir -p ../dist/sources
+          cp -r dist/. ../dist/sources/
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
