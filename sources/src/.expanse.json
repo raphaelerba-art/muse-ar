@@ -7,7 +7,7 @@
       "order": 0.5,
       "position": [
         0,
-        2,
+        1.5,
         0
       ],
       "rotation": [
@@ -93,54 +93,26 @@
         "intensity": 0.4
       }
     },
-    "47fe2d24-436e-4c28-9a28-f3e9fd53b30f": {
-      "id": "47fe2d24-436e-4c28-9a28-f3e9fd53b30f",
-      "name": "Plan A4",
-      "parentId": "6790b045-4dee-49a5-bf7b-e0dfe7ccc299",
-      "order": 3,
-      "position": [
-        0,
-        2,
-        -1.5
-      ],
-      "rotation": [
-        0,
-        0,
-        0,
-        1
-      ],
-      "scale": [
-        1,
-        1,
-        1
-      ],
-      "geometry": null,
-      "material": null,
-      "components": {},
-      "imageTarget": {
-        "name": "sources_cible"
-      }
-    },
     "74e83928-cf4b-40c3-9429-6abf9a4fd468": {
       "id": "74e83928-cf4b-40c3-9429-6abf9a4fd468",
       "name": "Les Sources",
-      "parentId": "47fe2d24-436e-4c28-9a28-f3e9fd53b30f",
+      "parentId": "6790b045-4dee-49a5-bf7b-e0dfe7ccc299",
       "order": 1,
       "position": [
-        -7.350025522258647,
-        -3.7425917897199192,
-        0
+        -107.50404,
+        -0.025,
+        50.23365
       ],
       "rotation": [
-        0.7071067811865476,
         0,
         0,
-        0.7071067811865476
+        0,
+        1
       ],
       "scale": [
-        0.0006826635882446339,
-        0.0006826635882446339,
-        0.0006826635882446339
+        0.01,
+        0.01,
+        0.01
       ],
       "geometry": null,
       "material": null,

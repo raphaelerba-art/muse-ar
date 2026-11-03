@@ -1,9 +1,4 @@
 const onxrloaded = () => {
-  XR8.XrController.configure({
-    imageTargetData: [
-      require('../image-targets/sources_cible.json'),
-    ],
-  })
   // Desktop / incompatible-device page, styled like raphaelerba.art.
   LandingPage.configure({
     backgroundColor: '#222222',
