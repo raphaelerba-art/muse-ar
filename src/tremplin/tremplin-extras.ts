@@ -14,6 +14,11 @@ declare const THREE: any
 const CLIP_DURATION = 6        // seconds, tremplin.c4d frames 0-180 @ 30 fps
 const SHADOW_OPACITY = 0.35
 const CATCHER_SIZE = 2         // image widths; the jumps throw shadows past the image edges
+// Shading: a strong sun over weak scene lights (Muse space: ambient 0.35, directional 0.4),
+// off-white instead of pure white and dim reflections, so the white bodies keep their volume.
+const SUN_INTENSITY = 2
+const OFF_WHITE = 0.85
+const ENV_INTENSITY = 0.3
 
 // tremplin.c4d (deformers, Cloth Surface, constraints, XPresso) is baked per frame by
 // scratchpad bake_tremplin.py into tremplin_anim.bin (MVA1, as Muse), vertices in the order of
@@ -52,7 +57,7 @@ const setup = (world: ecs.World, eid: ecs.Eid, tremplinEid: ecs.Eid, state: Stat
   stage.add(catcher)
 
   // Sun high above the image; its frustum is refitted to the target's world scale each frame.
-  const sun = new THREE.DirectionalLight(0xffffff, 1)
+  const sun = new THREE.DirectionalLight(0xffffff, SUN_INTENSITY)
   sun.position.set(0.3, 0.5, 2)
   sun.target.position.set(0, 0, 0)
   sun.castShadow = true
@@ -112,9 +117,15 @@ const prepareMeshes = (world: ecs.World, tremplinEid: ecs.Eid) => {
       o.castShadow = true
       o.frustumCulled = false
       // The bake has no normals (they change every frame): smooth ones are computed below.
-      if (o.material.flatShading) {
-        o.material.flatShading = false
-        o.material.needsUpdate = true
+      const {material} = o
+      if (material.isMeshStandardMaterial && !material.userData.tremplinLook) {
+        material.userData.tremplinLook = true
+        material.flatShading = false
+        material.envMapIntensity = ENV_INTENSITY
+        if (material.color.r > 0.9 && material.color.g > 0.9 && material.color.b > 0.9) {
+          material.color.setScalar(OFF_WHITE)
+        }
+        material.needsUpdate = true
       }
       meshes[Number(match[1])] = o
     }
