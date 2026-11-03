@@ -37,7 +37,8 @@ const addLandingFrame = () => {
     .muse-header span { display: block; margin-top: 2px; font-size: 15px; line-height: 1;
       text-transform: uppercase; color: #ffffff; }
     .muse-footer { bottom: 14px; font-size: 14px; }
-    .muse-footer > a { text-decoration: underline; text-underline-offset: 3px; }
+    .muse-footer .muse-title { font-size: 18px; font-weight: 500; }
+    .muse-footer > a { display: inline-block; margin-top: 4px; text-decoration: underline; text-underline-offset: 3px; }
     .muse-social { display: flex; justify-content: center; gap: 6px; margin-top: 8px; }
     .muse-social a { display: block; width: 36px; height: 30px; opacity: 0.85; }
     .muse-social a:hover, .muse-footer > a:hover { opacity: 1; color: #ffffff; }
@@ -52,7 +53,8 @@ const addLandingFrame = () => {
     '<img src="assets/logo-header.png" alt=""><span>Raphaël Erba</span></a>'
   const footer = document.createElement('div')
   footer.className = 'muse-frame muse-footer'
-  footer.innerHTML = `<a href="${SITE}" target="_blank" rel="noopener">Découvrez mon travail</a>` +
+  footer.innerHTML = '<div class="muse-title">Découvrez mon travail</div>' +
+    `<a href="${SITE}" target="_blank" rel="noopener">raphaelerba.art</a>` +
     '<div class="muse-social">' +
     SOCIAL.map(s => `<a href="${s.href}" target="_blank" rel="noopener" aria-label="${s.name}">${s.svg}</a>`).join('') +
     '</div>'
