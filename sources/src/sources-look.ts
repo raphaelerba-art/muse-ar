@@ -5,7 +5,19 @@ import * as ecs from '@8thwall/ecs'
 
 const GLASS = /glass|verre|vitr|window|fen[eê]tre|translucent/i
 
+const CEILING_MIN_Y = 2.1  // meters above the floor
+
 const done = new Set<ecs.Eid>()
+
+// A near plane at 1 cm wastes depth precision over a whole building (z-fighting).
+const fixNearPlane = (scene: any) => {
+  scene.traverse((o: any) => {
+    if (o.isPerspectiveCamera && o.near < 0.1) {
+      o.near = 0.1
+      o.updateProjectionMatrix()
+    }
+  })
+}
 
 const buildRoomEnvironment = (THREE: any, renderer: any) => {
   // A bright room with a few light panels, rendered into a prefiltered env map.
@@ -59,7 +71,7 @@ const setup = (world: ecs.World, eid: ecs.Eid) => {
 
   scene.environment = buildRoomEnvironment(THREE, renderer)
 
-  const sun = new THREE.DirectionalLight(0xfff1dd, 2.2)
+  const sun = new THREE.DirectionalLight(0xfff1dd, 3.2)
   sun.position.set(6, 9, 4)
   sun.castShadow = true
   sun.shadow.mapSize.set(2048, 2048)
@@ -68,17 +80,28 @@ const setup = (world: ecs.World, eid: ecs.Eid) => {
   sun.shadow.normalBias = 0.02
   scene.add(sun)
 
+  model.updateMatrixWorld(true)
+  const box = new THREE.Box3()
   model.traverse((o: any) => {
     if (!o.isMesh) {
       return
     }
-    o.castShadow = true
+    box.setFromObject(o)
+    // Ceiling and roof would keep the whole interior in shadow: let the sun through them.
+    const overhead = box.min.y > CEILING_MIN_Y
+    o.castShadow = !overhead
     o.receiveShadow = true
+    if (overhead) {
+      // SketchUp ceilings often have coplanar faces that flicker: push them apart in depth.
+      for (const mat of Array.isArray(o.material) ? o.material : [o.material]) {
+        Object.assign(mat, {polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 4})
+      }
+    }
     for (const mat of Array.isArray(o.material) ? o.material : [o.material]) {
       if (!mat) {
         continue
       }
-      mat.envMapIntensity = 1
+      mat.envMapIntensity = 0.6
       if (GLASS.test(mat.name || '') || GLASS.test(o.name || '')) {
         Object.assign(mat, {transparent: true, opacity: 0.2, roughness: 0.05, metalness: 0, depthWrite: false})
       } else if (mat.roughness !== undefined && mat.roughness >= 1) {
@@ -100,6 +123,7 @@ ecs.registerComponent({
     done.delete(component.eid)
   },
   tick: (world, component) => {
+    fixNearPlane((world.three as any).scene)
     if (!done.has(component.eid) && setup(world, component.eid)) {
       done.add(component.eid)
     }
