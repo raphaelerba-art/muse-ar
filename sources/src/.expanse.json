@@ -61,7 +61,7 @@
       "light": {
         "type": "directional",
         "castShadow": false,
-        "intensity": 0.45
+        "intensity": 0.2
       }
     },
     "03707121-1b48-4bc1-be8c-12bf0de7691f": {
@@ -90,7 +90,7 @@
       "components": {},
       "light": {
         "type": "ambient",
-        "intensity": 0.4
+        "intensity": 0.15
       }
     },
     "74e83928-cf4b-40c3-9429-6abf9a4fd468": {
@@ -116,7 +116,13 @@
       ],
       "geometry": null,
       "material": null,
-      "components": {},
+      "components": {
+        "5a1c0e2b-6f3d-4c8a-9e21-7b4d3f6a8c10": {
+          "id": "5a1c0e2b-6f3d-4c8a-9e21-7b4d3f6a8c10",
+          "name": "Sources Look",
+          "parameters": {}
+        }
+      },
       "gltfModel": {
         "src": {
           "type": "asset",
