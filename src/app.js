@@ -2,6 +2,7 @@ const onxrloaded = () => {
   XR8.XrController.configure({
     imageTargetData: [
       require('../image-targets/cible_muse.json'),
+      require('../image-targets/cible_tremplin.json'),
     ],
   })
   // Desktop / incompatible-device page, styled like raphaelerba.art.

@@ -2145,6 +2145,82 @@
         "castShadow": true,
         "receiveShadow": false
       }
+    },
+    "6dfa309a-5552-42f3-88a0-c14354a04339": {
+      "id": "6dfa309a-5552-42f3-88a0-c14354a04339",
+      "name": "Tremplin Target",
+      "parentId": "ea848c78-a09d-4bbe-adfb-93abe9639bdb",
+      "order": 4,
+      "position": [
+        2,
+        2,
+        -1.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "geometry": null,
+      "material": null,
+      "components": {
+        "eb539769-4074-46b8-ad1a-a71cae64872b": {
+          "id": "eb539769-4074-46b8-ad1a-a71cae64872b",
+          "name": "Tremplin Extras",
+          "parameters": {
+            "tremplin": {
+              "type": "entity",
+              "id": "acc4474c-db60-454b-9371-b8d087057462"
+            }
+          }
+        }
+      },
+      "imageTarget": {
+        "name": "cible_tremplin"
+      }
+    },
+    "acc4474c-db60-454b-9371-b8d087057462": {
+      "id": "acc4474c-db60-454b-9371-b8d087057462",
+      "name": "Tremplin",
+      "parentId": "6dfa309a-5552-42f3-88a0-c14354a04339",
+      "order": 1,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0.7071067811865476,
+        0,
+        0,
+        0.7071067811865476
+      ],
+      "scale": [
+        0.125,
+        0.125,
+        0.125
+      ],
+      "geometry": null,
+      "material": null,
+      "components": {},
+      "gltfModel": {
+        "src": {
+          "type": "asset",
+          "asset": "assets/tremplin/tremplin.glb"
+        },
+        "animationClip": "",
+        "loop": true
+      },
+      "shadow": {
+        "castShadow": true,
+        "receiveShadow": false
+      }
     }
   },
   "spaces": {

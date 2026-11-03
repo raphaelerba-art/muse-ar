@@ -26,16 +26,16 @@ const ANIM_MESHES = ['muse_white', 'muse_black']
 // trails are baked instead (muse_sweeps.bin) and rebuilt as tubes:
 //   "MSW1", uint32 frames, float32 fps, uint32 sweeps; per frame and sweep:
 //   float32 radius (m), uint16 segments, per segment uint16 points + float32 xyz.
-type SweepFrame = {radius: number, segments: Float32Array[]}[]
+export type SweepFrame = {radius: number, segments: Float32Array[]}[]
 
-type SweepAnimation = {
+export type SweepAnimation = {
   fps: number
   frames: SweepFrame[]
   meshes: any[]
   lastFrame: number
 }
 
-type VertexAnimation = {
+export type VertexAnimation = {
   frames: number
   fps: number
   vertices: number
@@ -66,7 +66,7 @@ const findVideo = (object: any): HTMLVideoElement | undefined => {
   return found
 }
 
-const parseAnimation = (buffer: ArrayBuffer): VertexAnimation => {
+export const parseAnimation = (buffer: ArrayBuffer): VertexAnimation => {
   const view = new DataView(buffer)
   const magic = String.fromCharCode(...new Uint8Array(buffer, 0, 4))
   if (magic !== 'MVA1') {
@@ -80,7 +80,7 @@ const parseAnimation = (buffer: ArrayBuffer): VertexAnimation => {
   }
 }
 
-const parseSweeps = (buffer: ArrayBuffer): Omit<SweepAnimation, 'meshes' | 'lastFrame'> => {
+export const parseSweeps = (buffer: ArrayBuffer): Omit<SweepAnimation, 'meshes' | 'lastFrame'> => {
   const view = new DataView(buffer)
   const magic = String.fromCharCode(...new Uint8Array(buffer, 0, 4))
   if (magic !== 'MSW1') {
@@ -232,7 +232,7 @@ const applyAnimation = (anim: VertexAnimation, meshes: Record<string, any>, t: n
   return true
 }
 
-const applySweeps = (sweeps: SweepAnimation, t: number) => {
+export const applySweeps = (sweeps: SweepAnimation, t: number) => {
   const f = Math.min(sweeps.frames.length - 1, Math.floor(t * sweeps.fps))
   if (f === sweeps.lastFrame) {
     return

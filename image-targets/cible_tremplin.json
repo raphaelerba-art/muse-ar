@@ -1,0 +1,24 @@
+{
+    "imagePath":  "image-targets/cible_tremplin_luminance.png",
+    "resources":  {
+                      "originalImage":  "cible_tremplin_original.png",
+                      "croppedImage":  "cible_tremplin_cropped.png",
+                      "thumbnailImage":  "cible_tremplin_thumbnail.png",
+                      "luminanceImage":  "cible_tremplin_luminance.png"
+                  },
+    "name":  "cible_tremplin",
+    "type":  "PLANAR",
+    "properties":  {
+                       "top":  0,
+                       "left":  128,
+                       "width":  768,
+                       "height":  1024,
+                       "isRotated":  false,
+                       "originalWidth":  1024,
+                       "originalHeight":  1024
+                   },
+    "loadAutomatically":  true,
+    "created":  1793719546981,
+    "updated":  1793719546981,
+    "metadata":  null
+}
