@@ -12,12 +12,14 @@ import {
 declare const THREE: any
 
 const CLIP_DURATION = 6        // seconds, tremplin.c4d frames 0-180 @ 30 fps
-const SHADOW_OPACITY = 0.35
+const SHADOW_OPACITY = 0.45  // tremplin.c4d Light: shadow density 50 %
 const CATCHER_SIZE = 2         // image widths; the jumps throw shadows past the image edges
-// Shading: a strong sun over weak scene lights (Muse space: ambient 0.35, directional 0.4),
-// off-white instead of pure white and dim reflections, so the white bodies keep their volume.
-const SUN_INTENSITY = 2
-const OFF_WHITE = 0.85
+// Shading close to the Standard render of tremplin.c4d: its infinite Light (nearly overhead,
+// tilted toward the image top) as a strong shadow-casting sun, a soft sky/ground fill standing in
+// for GI + AO, weak scene lights (Muse space: ambient 0.35, directional 0.4), dim reflections.
+const SUN_INTENSITY = 2.2
+const SUN_POSITION = [0, 0.52, 1.93]   // target space; = -direction of the C4D Light
+const FILL_INTENSITY = 0.9
 const ENV_INTENSITY = 0.3
 
 // tremplin.c4d (deformers, Cloth Surface, constraints, XPresso) is baked per frame by
@@ -58,13 +60,20 @@ const setup = (world: ecs.World, eid: ecs.Eid, tremplinEid: ecs.Eid, state: Stat
 
   // Sun high above the image; its frustum is refitted to the target's world scale each frame.
   const sun = new THREE.DirectionalLight(0xffffff, SUN_INTENSITY)
-  sun.position.set(0.3, 0.5, 2)
+  sun.position.set(...SUN_POSITION)
   sun.target.position.set(0, 0, 0)
   sun.castShadow = true
-  sun.shadow.mapSize.set(2048, 2048)
+  sun.shadow.mapSize.set(1024, 1024)   // lower resolution = softer edges
   sun.shadow.bias = -0.0005
   stage.add(sun, sun.target)
   state.sun = sun
+
+  // Sky / ground fill along the world's up axis (the image lies on a table).
+  const fill = new THREE.HemisphereLight(0xffffff, 0x808080, FILL_INTENSITY)
+  fill.position.set(0, 1, 0)
+  world.three.scene.add(fill)
+  fill.updateMatrixWorld(true)
+  world.three.notifyChanged(fill)
 
   fetch(animBinUrl).then(r => r.arrayBuffer()).then((buffer) => {
     state.anim = parseAnimation(buffer)
@@ -122,9 +131,6 @@ const prepareMeshes = (world: ecs.World, tremplinEid: ecs.Eid) => {
         material.userData.tremplinLook = true
         material.flatShading = false
         material.envMapIntensity = ENV_INTENSITY
-        if (material.color.r > 0.9 && material.color.g > 0.9 && material.color.b > 0.9) {
-          material.color.setScalar(OFF_WHITE)
-        }
         material.needsUpdate = true
       }
       meshes[Number(match[1])] = o
