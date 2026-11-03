@@ -1984,7 +1984,7 @@
       "light": {
         "type": "directional",
         "castShadow": false,
-        "intensity": 0.4
+        "intensity": 0.15
       }
     },
     "7ed187a3-8c4c-466e-bc19-8bffd9bf842c": {
@@ -2013,7 +2013,7 @@
       "components": {},
       "light": {
         "type": "ambient",
-        "intensity": 0.35
+        "intensity": 0.15
       }
     },
     "2603bb74-11dc-4c4b-9743-0eee5b4e5cbb": {

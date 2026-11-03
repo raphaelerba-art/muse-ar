@@ -16,11 +16,14 @@ const SHADOW_OPACITY = 0.45  // tremplin.c4d Light: shadow density 50 %
 const CATCHER_SIZE = 2         // image widths; the jumps throw shadows past the image edges
 // Shading close to the Standard render of tremplin.c4d: its infinite Light (nearly overhead,
 // tilted toward the image top) as a strong shadow-casting sun, a soft sky/ground fill standing in
-// for GI + AO, weak scene lights (Muse space: ambient 0.35, directional 0.4), dim reflections.
-const SUN_INTENSITY = 2.2
+// for GI + AO, weak scene lights (Muse space: ambient 0.15, directional 0.15) and no reflections.
+// The engine renders without tone mapping, so whites are toned down to stay below clipping.
+const SUN_INTENSITY = 1.4
 const SUN_POSITION = [0, 0.52, 1.93]   // target space; = -direction of the C4D Light
-const FILL_INTENSITY = 0.9
-const ENV_INTENSITY = 0.3
+const FILL_INTENSITY = 0.6
+const WHITE = 0.7                      // linear; lit whites (~0.86 sRGB)
+const SELF_LIT = 0.8                   // linear; self-lit trails and brush hair
+const ROUGHNESS = 0.95
 
 // tremplin.c4d (deformers, Cloth Surface, constraints, XPresso) is baked per frame by
 // scratchpad bake_tremplin.py into tremplin_anim.bin (MVA1, as Muse), vertices in the order of
@@ -82,7 +85,7 @@ const setup = (world: ecs.World, eid: ecs.Eid, tremplinEid: ecs.Eid, state: Stat
   const sweepGroup = new THREE.Group()
   tremplin.add(sweepGroup)
   const sweepMaterial = new THREE.MeshBasicMaterial({
-    color: 0xffffff, side: THREE.DoubleSide, toneMapped: false,
+    color: new THREE.Color().setScalar(SELF_LIT), side: THREE.DoubleSide, toneMapped: false,
   })
   fetch(sweepsBinUrl).then(r => r.arrayBuffer()).then((buffer) => {
     const parsed = parseSweeps(buffer)
@@ -127,10 +130,21 @@ const prepareMeshes = (world: ecs.World, tremplinEid: ecs.Eid) => {
       o.frustumCulled = false
       // The bake has no normals (they change every frame): smooth ones are computed below.
       const {material} = o
-      if (material.isMeshStandardMaterial && !material.userData.tremplinLook) {
+      if (!material.userData.tremplinLook) {
         material.userData.tremplinLook = true
-        material.flatShading = false
-        material.envMapIntensity = ENV_INTENSITY
+        const {r, g, b} = material.color
+        const white = r > 0.7 && g > 0.7 && b > 0.7
+        if (material.isMeshStandardMaterial) {
+          material.flatShading = false
+          material.envMapIntensity = 0
+          material.roughness = ROUGHNESS
+          material.metalness = 0
+          if (white) {
+            material.color.setScalar(WHITE)
+          }
+        } else if (white) {
+          material.color.setScalar(SELF_LIT)
+        }
         material.needsUpdate = true
       }
       meshes[Number(match[1])] = o
