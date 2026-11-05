@@ -2,4 +2,4 @@ import ideaBinUrl from '../assets/idea/idea.bin'
 import {registerBdCase} from './bd-case'
 
 // Case 2 of the BD, baked from Idea_GLB3.c4d; target and wall colour = References/Idea_GLB3.jpg.
-registerBdCase('Idea Extras', 'cible_idea', ideaBinUrl, '#001f4e')
+registerBdCase('Idea Extras', 'cible_idea', ideaBinUrl, '#376293')
