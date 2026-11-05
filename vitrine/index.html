@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Réalité augmentée – Raphaël Erba</title>
+<meta name="description" content="Œuvres en réalité augmentée de Raphaël Erba : Muse et Tremplin.">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap">
+<style>
+/* Charte reprise de raphaelerba.art : fond sombre #222, texte #eee / #888, navigation en capitales 600, police sans géométrique. */
+:root{
+  --bg:#222222; --panel:#1b1b1b; --fg:#eeeeee; --mute:#888888; --line:#333333; --plate:#ffffff;
+  --f:"Montserrat","Proxima Nova",Arial,sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font-family:var(--f);font-size:16px;line-height:1.6}
+.wrap{max-width:1140px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{background:var(--bg)}
+header .wrap{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;padding-block:18px}
+.logo img{height:46px;width:auto;display:block}
+nav{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px 22px}
+nav a{font-weight:600;font-size:14px;text-transform:uppercase;color:var(--mute);text-decoration:none}
+nav a:hover,nav a:focus-visible,nav a[aria-current]{color:var(--fg)}
+a:focus-visible{outline:2px solid var(--fg);outline-offset:4px}
+.intro{text-align:center;padding-block:56px 40px;display:grid;gap:14px;justify-items:center}
+.intro h1{font-weight:700;font-size:clamp(24px,4vw,34px);margin:0;text-wrap:balance}
+.intro p{color:var(--mute);margin:0;max-width:62ch}
+.how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;padding-block:28px;border-block:1px solid var(--line);text-align:center}
+.how>div{display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+.qr{width:132px;height:132px;background:#fff;padding:6px;margin-bottom:14px}
+.how b{display:block;font-weight:600;text-transform:uppercase;font-size:14px;margin-bottom:4px}
+.how span{color:var(--mute);font-size:15px}
+.works{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:40px;padding-block:48px 72px}
+.work{display:grid;gap:18px;align-content:start}
+.plate{background:var(--plate);aspect-ratio:1;max-width:100%}
+.plate img{width:100%;height:100%;object-fit:cover;display:block}
+.work h2{font-weight:700;font-size:22px;text-transform:uppercase;margin:0;text-align:center}
+.work p{color:var(--mute);margin:0;text-align:center}
+.actions{display:flex;justify-content:center;flex-wrap:wrap;gap:12px}
+.btn.ghost{border-color:var(--mute);color:var(--mute);display:inline-flex;align-items:center;justify-content:center;padding:0;width:44px}
+.btn.ghost svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+.btn.ghost:hover{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.btn{display:inline-block;padding:11px 26px;border:1px solid var(--fg);color:var(--fg);text-decoration:none;font-weight:600;font-size:14px;text-transform:uppercase;letter-spacing:.04em}
+.btn:hover{background:var(--fg);color:var(--bg)}
+footer{border-top:1px solid var(--line)}
+footer .wrap{padding-block:24px 36px;text-align:center;color:var(--mute);font-size:13px}
+.draft{background:var(--panel);color:var(--mute);text-align:center;font-size:12px;padding-block:6px}
+@media (max-width:760px){.works,.how{grid-template-columns:minmax(0,1fr)}.how{gap:16px}nav{justify-content:flex-start}}
+*{box-sizing:border-box}
+body{margin:0}
+img{max-width:100%}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a class="logo" href="https://raphaelerba.art/accueil"><img src="logo.svg" alt="Raphaël Erba"></a>
+    <nav>
+      <a href="https://raphaelerba.art/accueil">Accueil</a>
+      <a href="https://raphaelerba.art/work">Art</a>
+      <a href="https://raphaelerba.art/commercial">Commercial</a>
+      <a href="https://raphaelerba.art/shorts">Shorts</a>
+      <a href="https://raphaelerba.art/contact">Contact</a>
+      <a href="https://raphaelerba.art/liens">Links</a>
+      <a href="/" aria-current="page">Réalité augmentée</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="wrap intro">
+    <h1>Réalité augmentée</h1>
+    <p>Deux œuvres à faire apparaître chez vous. Affichez l'image sur un écran ou imprimez-la, ouvrez le lien sur votre téléphone et visez : la scène s'anime devant vous.</p>
+  </section>
+
+  <section class="wrap how" aria-label="Mode d'emploi">
+    <div><b>Afficher</b><span>L'image sur un écran ou imprimée.</span></div>
+    <div><img class="qr" src="qr.svg" alt="QR code vers ar.raphaelerba.art/ar/"><b>Ouvrir</b><span>Le lien sur iPhone ou Android, sans application.</span></div>
+    <div><b>Viser</b><span>Autorisez la caméra et cadrez toute l'image.</span></div>
+  </section>
+
+  <section class="wrap works">
+    <article class="work" id="muse">
+      <div class="plate"><img src="muse.jpg" alt="Image de Muse : cercles et symboles géométriques, une figure plonge en haut à gauche"></div>
+      <h2>Muse</h2>
+      <p>Une figure animée surgit du cadre, portée par une vidéo de fond.</p>
+      <div class="actions"><a class="btn" href="/ar/">Lancer l'AR</a><a class="btn ghost" href="muse-print.jpg" data-print aria-label="Imprimer l'image de Muse" title="Imprimer l'image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2M6 14h12v7H6z"/></svg></a></div>
+    </article>
+
+    <article class="work" id="tremplin">
+      <div class="plate"><img src="tremplin.jpg" alt="Image de Tremplin : deux personnages au chapeau conique sur une bascule, parmi des cercles et symboles géométriques"></div>
+      <h2>Tremplin</h2>
+      <p>Deux personnages au chapeau conique jouent à la bascule au-dessus de l'image.</p>
+      <div class="actions"><a class="btn" href="/ar/">Lancer l'AR</a><a class="btn ghost" href="tremplin-print.jpg" data-print aria-label="Imprimer l'image de Tremplin" title="Imprimer l'image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2M6 14h12v7H6z"/></svg></a></div>
+    </article>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">© Raphaël Erba · Motion design, Lyon</div>
+</footer>
+<script>
+document.querySelectorAll('a[data-print]').forEach(function(a){
+  a.addEventListener('click',function(e){
+    e.preventDefault();
+    var f=document.createElement('iframe');
+    f.style.cssText='position:fixed;width:0;height:0;border:0;visibility:hidden';
+    document.body.appendChild(f);
+    var d=f.contentWindow.document;
+    d.open();
+    d.write('<!doctype html><html><head><style>@page{margin:10mm}html,body{margin:0;height:100%}img{display:block;max-width:100%;max-height:100vh;margin:0 auto}</style></head><body><img src="'+a.href+'"></body></html>');
+    d.close();
+    var img=d.querySelector('img');
+    img.onload=function(){f.contentWindow.focus();f.contentWindow.print();setTimeout(function(){f.remove()},1000)};
+  });
+});
+</script>
+</body>
+</html>

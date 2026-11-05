@@ -40,13 +40,18 @@ jobs:
         run: |
           npm ci
           npm run build
-          mkdir -p ../dist/sources
-          cp -r dist/. ../dist/sources/
+
+      - name: Assemble site (vitrine at /, Muse at /ar/, Les Sources at /sources/)
+        run: |
+          mkdir -p _site/ar _site/sources
+          cp -r vitrine/. _site/
+          cp -r dist/. _site/ar/
+          cp -r sources/dist/. _site/sources/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: ./_site
 
   deploy:
     environment:
