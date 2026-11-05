@@ -2259,6 +2259,41 @@
         "name": "cible_apple"
       },
       "hidden": false
+    },
+    "b7d6e2ee-00d3-4a34-a58d-9cd5ca60077a": {
+      "id": "b7d6e2ee-00d3-4a34-a58d-9cd5ca60077a",
+      "name": "Idea Target",
+      "parentId": "ea848c78-a09d-4bbe-adfb-93abe9639bdb",
+      "order": 6,
+      "position": [
+        6,
+        2,
+        -1.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "geometry": null,
+      "material": null,
+      "components": {
+        "4c09481c-38e0-4406-b8b5-11417b8c65d6": {
+          "id": "4c09481c-38e0-4406-b8b5-11417b8c65d6",
+          "name": "Idea Extras",
+          "parameters": {}
+        }
+      },
+      "imageTarget": {
+        "name": "cible_idea"
+      },
+      "hidden": false
     }
   },
   "spaces": {

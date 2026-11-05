@@ -4,6 +4,7 @@ const onxrloaded = () => {
       require('../image-targets/cible_muse.json'),
       require('../image-targets/cible_tremplin.json'),
       require('../image-targets/cible_apple.json'),
+      require('../image-targets/cible_idea.json'),
     ],
   })
   // Desktop / incompatible-device page, styled like raphaelerba.art.

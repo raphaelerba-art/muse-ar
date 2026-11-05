@@ -24,15 +24,18 @@ export const createAppleScene = (THREE: any, data: any, options: any = {}) => {
   const {blob} = data
   const lit = options.lit !== false
   const materials = data.materials.map(({color, emissive}: any) => {
-    // C4D adds luminance on top of the lit colour; keep the sum below 1 so whites do not clip
-    // (the engine renders without tone mapping) and the shading stays visible.
-    const keep = 1 - Math.max(...emissive)
-    const params = {
-      color: new THREE.Color(...color.map((c: number) => c * keep)),
-      emissive: new THREE.Color(...emissive),
-      side: THREE.DoubleSide,
-    }
-    return lit ? new THREE.MeshLambertMaterial(params) : new THREE.MeshBasicMaterial({color: params.color})
+    // C4D colours are sRGB values, and C4D adds the luminance on top of the lit colour, which
+    // washes saturated colours out once clipped. Keep the hue of the colour: its luminance share k
+    // glows, the rest is lit, so the sum never exceeds the colour (no tone mapping in the engine).
+    const k = Math.min(1, Math.max(...emissive))
+    const full = new THREE.Color().setRGB(color[0], color[1], color[2], THREE.SRGBColorSpace)
+    const glow = Math.max(...color) > 0
+      ? full.clone().multiplyScalar(k)
+      : new THREE.Color().setRGB(emissive[0], emissive[1], emissive[2], THREE.SRGBColorSpace)
+    if (!lit) return new THREE.MeshBasicMaterial({color: full})
+    return new THREE.MeshLambertMaterial({
+      color: full.clone().multiplyScalar(1 - k), emissive: glow, side: THREE.DoubleSide,
+    })
   })
   const group = new THREE.Group()
   group.name = 'apple'
@@ -139,7 +142,7 @@ export const createAppleScene = (THREE: any, data: any, options: any = {}) => {
     } else if (m.kind === 'deform') {
       const geometry = makeGeometry(m)
       geometry.computeVertexNormals()
-      const mesh = addMesh(geometry, materials)
+      const mesh = addMesh(geometry, materials, 'deform')
       const frameBytes = 24 + m.vertices * 6
       const view = new DataView(blob, m.frames, frameBytes * m.frameCount)
       const out = geometry.attributes.position.array
@@ -221,9 +224,8 @@ export const addOutlines = (THREE: any, scene: any, width: number, keep: (name: 
     if (!keep(mesh.name)) {
       continue
     }
-    const scale = mesh.matrixAutoUpdate ? 1 : mesh.matrix.getMaxScaleOnAxis()
     const material = new THREE.MeshBasicMaterial({color: 0x000000, side: THREE.BackSide})
-    const uniform = {value: width / (scale || 1)}
+    const uniform = {value: width}
     material.onBeforeCompile = (shader: any) => {
       shader.uniforms.outlineWidth = uniform
       shader.vertexShader = shader.vertexShader
@@ -242,6 +244,10 @@ export const addOutlines = (THREE: any, scene: any, width: number, keep: (name: 
     }
     // Follows the mesh: same matrix (child), same geometry, swapped when the mesh's is.
     outline.onBeforeRender = () => {
+      // The width is given in target units: undo the mesh's own scale, which is animated on some
+      // objects (a bulb growing from nothing).
+      const scale = mesh.matrixAutoUpdate ? 1 : mesh.matrix.getMaxScaleOnAxis()
+      uniform.value = scale > 1e-6 ? width / scale : 0
       if (outline.geometry !== mesh.geometry) {
         outline.geometry = mesh.geometry
       }

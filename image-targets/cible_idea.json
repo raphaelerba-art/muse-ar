@@ -1,0 +1,24 @@
+{
+    "imagePath": "image-targets/cible_idea_luminance.png",
+    "resources": {
+        "originalImage": "cible_idea_original.png",
+        "croppedImage": "cible_idea_cropped.png",
+        "thumbnailImage": "cible_idea_thumbnail.png",
+        "luminanceImage": "cible_idea_luminance.png"
+    },
+    "name": "cible_idea",
+    "type": "PLANAR",
+    "properties": {
+        "top": 0,
+        "left": 135,
+        "width": 810,
+        "height": 1080,
+        "isRotated": false,
+        "originalWidth": 1080,
+        "originalHeight": 1080
+    },
+    "loadAutomatically": true,
+    "created": 1793894500523,
+    "updated": 1793894500523,
+    "metadata": null
+}
