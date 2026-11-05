@@ -7,7 +7,7 @@ import {
 
 // Tremplin (seesaw) in front of its image target, as laid out in tremplin.c4d: the image is the
 // wall (Plane.1, 8.45 m wide, hidden here behind a white panel) and the ground (Plane, 8.45 x
-// 4.22 m) leaves its bottom edge at 90°, transparent with only the shadow drawn on it.
+// 4.22 m) leaves its bottom edge at 90°, opaque white with rounded front corners.
 // Target space: the full square image is 1 x 1, +Z out of it. The entity holding tremplin.glb
 // maps the C4D scene onto it: no rotation, scale 1/8.45, wall centre on the target's centre.
 
@@ -19,6 +19,7 @@ const SCENE_SCALE = 1 / 8.45
 const GROUND_Y = -4.25 * SCENE_SCALE   // target space, ground level
 const GROUND_Z = 2.1 * SCENE_SCALE     // target space, centre of the ground and of the seesaw
 const GROUND_SIZE = [1, 0.5]
+const GROUND_RADIUS = 0.06             // front corners; the back edge stays against the wall
 const SHADOW_HALF = 0.8                // image widths, half size of the shadow frustum
 // Shading close to the Standard render of tremplin.c4d: its infinite Light (nearly overhead,
 // coming from behind the wall) as a strong shadow-casting sun, sky/ground and front fills standing
@@ -49,6 +50,23 @@ type State = {
 
 const states = new Map<ecs.Eid, State>()
 
+// Ground outline in its own plane; +Y is the back edge, along the wall.
+const groundShape = () => {
+  const [w, d] = GROUND_SIZE
+  const x = w / 2
+  const y = d / 2
+  const r = GROUND_RADIUS
+  const shape = new THREE.Shape()
+  shape.moveTo(-x, y)
+  shape.lineTo(-x, r - y)
+  shape.quadraticCurveTo(-x, -y, r - x, -y)
+  shape.lineTo(x - r, -y)
+  shape.quadraticCurveTo(x, -y, x, r - y)
+  shape.lineTo(x, y)
+  shape.closePath()
+  return new THREE.ShapeGeometry(shape, 12)
+}
+
 const setup = (world: ecs.World, eid: ecs.Eid, tremplinEid: ecs.Eid, state: State) => {
   const stage = world.three.entityToObject.get(eid)
   const tremplin = world.three.entityToObject.get(tremplinEid)
@@ -61,22 +79,20 @@ const setup = (world: ecs.World, eid: ecs.Eid, tremplinEid: ecs.Eid, state: Stat
   renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
   // White panel hiding the image.
-  const wall = new THREE.Mesh(
-    new THREE.PlaneGeometry(1, 1),
-    new THREE.MeshBasicMaterial({color: 0xffffff, toneMapped: false})
-  )
-  wall.position.z = 0.001
+  const white = new THREE.MeshBasicMaterial({color: 0xffffff, toneMapped: false})
+  const wall = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.5 - GROUND_Y), white)
+  wall.position.set(0, (0.5 + GROUND_Y) / 2, 0.001)
   stage.add(wall)
 
-  // Transparent ground, perpendicular to the image: only the shadow shows.
-  const catcher = new THREE.Mesh(
-    new THREE.PlaneGeometry(...GROUND_SIZE),
-    new THREE.ShadowMaterial({opacity: SHADOW_OPACITY})
-  )
-  catcher.rotation.x = -Math.PI / 2
+  // White ground, perpendicular to the image, with the shadow drawn just above it.
+  const geometry = groundShape()
+  const ground = new THREE.Mesh(geometry, white)
+  const catcher = new THREE.Mesh(geometry, new THREE.ShadowMaterial({opacity: SHADOW_OPACITY}))
+  ground.rotation.x = catcher.rotation.x = -Math.PI / 2
+  ground.position.set(0, GROUND_Y, GROUND_Z)
   catcher.position.set(0, GROUND_Y + 0.001, GROUND_Z)
   catcher.receiveShadow = true
-  stage.add(catcher)
+  stage.add(ground, catcher)
 
   // Its frustum is refitted to the target's world scale each frame.
   const sun = new THREE.DirectionalLight(0xffffff, SUN_INTENSITY)
