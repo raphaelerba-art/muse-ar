@@ -37,30 +37,24 @@ type State = {
   root?: any
 }
 
-// The cases look alike (same box, same cats), so the tracker can see two of them on one print:
-// only one case shows at a time. The first one found keeps the page until it is lost; then
-// another case still in view takes over.
+// The cases look alike (same box, same cats), so the tracker can find two of them on one print.
+// Two prints side by side both play; two cases found at the same place are one print seen twice,
+// and only the first one found shows there.
 const found = new Set<string>()
-let active: string | null = null
-const shown = new Map<string, (on: boolean) => void>()
+const where = new Map<string, any>()    // target -> world position of its case
+const OVERLAP = 0.5                     // image widths between two centres for the same print
 
-const activate = (target: string | null) => {
-  active = target
-  shown.forEach((show, name) => show(name === active))
-}
-
-const onFound = (target: string) => {
-  found.add(target)
-  if (active === null) {
-    activate(target)
+const visibleAt = (target: string, pos: any, width: number) => {
+  for (const other of found) {
+    if (other === target) {
+      return true
+    }
+    const p = where.get(other)
+    if (p && p.distanceTo(pos) < OVERLAP * width) {
+      return false
+    }
   }
-}
-
-const onLost = (target: string) => {
-  found.delete(target)
-  if (active === target) {
-    activate(found.values().next().value ?? null)
-  }
+  return false
 }
 
 const square = (half: number) => {
@@ -108,7 +102,7 @@ const setup = (world: ecs.World, eid: ecs.Eid, state: State, binUrl: string, lab
   state.ready = true
   // Everything of the case hangs under one group, hidden while another case has the page.
   const root = new THREE.Group()
-  root.visible = state.playing
+  root.visible = false
   stage.add(root)
   state.root = root
 
@@ -187,31 +181,22 @@ export const registerBdCase = (name: string, target: string, binUrl: string) => 
       states.set(component.eid, state)
       // The case starts over each time it gets the page, and waits while it is out of view or
       // another case has the page.
-      shown.set(target, (on: boolean) => {
-        if (on && !state.playing) {
-          state.time = 0
-        }
-        state.playing = on
-        if (state.root) {
-          state.root.visible = on
-          world.three.notifyChanged(state.root)
-        }
-      })
       world.events.addListener(world.events.globalId, 'reality.imagefound', (e: any) => {
         if (e.data?.name === target) {
-          onFound(target)
+          found.add(target)
         }
       })
       world.events.addListener(world.events.globalId, 'reality.imagelost', (e: any) => {
         if (e.data?.name === target) {
-          onLost(target)
+          found.delete(target)
+          where.delete(target)
         }
       })
     },
     remove: (world, component) => {
       states.delete(component.eid)
-      shown.delete(target)
-      onLost(target)
+      found.delete(target)
+      where.delete(target)
     },
     tick: (world, component) => {
       const state = states.get(component.eid)
@@ -225,6 +210,21 @@ export const registerBdCase = (name: string, target: string, binUrl: string) => 
         }
       }
       fitShadow(state)
+      const {root} = state
+      root.updateWorldMatrix(true, false)
+      const pos = (where.get(target) || new THREE.Vector3()).setFromMatrixPosition(root.matrixWorld)
+      if (found.has(target)) {
+        where.set(target, pos)
+      }
+      const on = found.has(target) && visibleAt(target, pos, root.matrixWorld.getMaxScaleOnAxis())
+      if (on !== state.playing) {
+        if (on) {
+          state.time = 0
+        }
+        state.playing = on
+        root.visible = on
+        world.three.notifyChanged(root)
+      }
       const {scene} = state
       if (!scene) {
         return
