@@ -34,6 +34,33 @@ type State = {
   shadowScale: number
   time: number
   playing: boolean
+  root?: any
+}
+
+// The cases look alike (same box, same cats), so the tracker can see two of them on one print:
+// only one case shows at a time. The first one found keeps the page until it is lost; then
+// another case still in view takes over.
+const found = new Set<string>()
+let active: string | null = null
+const shown = new Map<string, (on: boolean) => void>()
+
+const activate = (target: string | null) => {
+  active = target
+  shown.forEach((show, name) => show(name === active))
+}
+
+const onFound = (target: string) => {
+  found.add(target)
+  if (active === null) {
+    activate(target)
+  }
+}
+
+const onLost = (target: string) => {
+  found.delete(target)
+  if (active === target) {
+    activate(found.values().next().value ?? null)
+  }
 }
 
 const square = (half: number) => {
@@ -79,6 +106,11 @@ const setup = (world: ecs.World, eid: ecs.Eid, state: State, binUrl: string, lab
     return
   }
   state.ready = true
+  // Everything of the case hangs under one group, hidden while another case has the page.
+  const root = new THREE.Group()
+  root.visible = state.playing
+  stage.add(root)
+  state.root = root
 
   const {renderer} = world.three
   renderer.shadowMap.enabled = true
@@ -87,12 +119,12 @@ const setup = (world: ecs.World, eid: ecs.Eid, state: State, binUrl: string, lab
   // Depth only: drawn first, it keeps the camera image around the case and hides the box there.
   const occluder = new THREE.Mesh(ring(0.5, OCCLUDER_HALF), new THREE.MeshBasicMaterial({colorWrite: false}))
   occluder.renderOrder = -1
-  stage.add(occluder)
+  root.add(occluder)
 
   const border = new THREE.Mesh(ring(0.5, 0.5 + BORDER),
     new THREE.MeshBasicMaterial({color: 0x111111, toneMapped: false}))
   border.position.z = 0.001
-  stage.add(border)
+  root.add(border)
 
   const sun = new THREE.DirectionalLight(0xffffff, SUN_INTENSITY)
   sun.position.set(...SUN_POSITION)
@@ -100,7 +132,7 @@ const setup = (world: ecs.World, eid: ecs.Eid, state: State, binUrl: string, lab
   sun.castShadow = true
   sun.shadow.mapSize.set(1024, 1024)
   sun.shadow.bias = -0.0005
-  stage.add(sun, sun.target)
+  root.add(sun, sun.target)
   state.sun = sun
 
   addFill(world)
@@ -122,7 +154,7 @@ const setup = (world: ecs.World, eid: ecs.Eid, state: State, binUrl: string, lab
     if (width > 0) {
       addOutlines(THREE, scene, width, hasOutline)
     }
-    stage.add(scene.group)
+    root.add(scene.group)
     world.three.notifyChanged(stage)
     state.scene = scene
   }).catch(err => console.error(label, err))
@@ -151,23 +183,35 @@ export const registerBdCase = (name: string, target: string, binUrl: string) => 
     name,
     schema: {},
     add: (world, component) => {
-      const state: State = {ready: false, shadowScale: 0, time: 0, playing: true}
+      const state: State = {ready: false, shadowScale: 0, time: 0, playing: false}
       states.set(component.eid, state)
-      // The case starts over each time it is found again, and waits while it is out of view.
+      // The case starts over each time it gets the page, and waits while it is out of view or
+      // another case has the page.
+      shown.set(target, (on: boolean) => {
+        if (on && !state.playing) {
+          state.time = 0
+        }
+        state.playing = on
+        if (state.root) {
+          state.root.visible = on
+          world.three.notifyChanged(state.root)
+        }
+      })
       world.events.addListener(world.events.globalId, 'reality.imagefound', (e: any) => {
         if (e.data?.name === target) {
-          state.time = 0
-          state.playing = true
+          onFound(target)
         }
       })
       world.events.addListener(world.events.globalId, 'reality.imagelost', (e: any) => {
         if (e.data?.name === target) {
-          state.playing = false
+          onLost(target)
         }
       })
     },
     remove: (world, component) => {
       states.delete(component.eid)
+      shown.delete(target)
+      onLost(target)
     },
     tick: (world, component) => {
       const state = states.get(component.eid)
