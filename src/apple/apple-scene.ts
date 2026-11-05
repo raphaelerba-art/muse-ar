@@ -211,3 +211,43 @@ export const createAppleScene = (THREE: any, data: any, options: any = {}) => {
   update(0)
   return {group, update, duration, meshes, materials}
 }
+
+// Toon outline (inverted hull): a black copy of each mesh, pushed out along its normals and
+// drawn from the back, so only a thin rim shows around the silhouette. `width` is in target
+// space (image widths); it is converted to each mesh's own units.
+export const addOutlines = (THREE: any, scene: any, width: number, keep: (name: string) => boolean) => {
+  const outlines: any[] = []
+  for (const mesh of scene.meshes) {
+    if (!keep(mesh.name)) {
+      continue
+    }
+    const scale = mesh.matrixAutoUpdate ? 1 : mesh.matrix.getMaxScaleOnAxis()
+    const material = new THREE.MeshBasicMaterial({color: 0x000000, side: THREE.BackSide})
+    const uniform = {value: width / (scale || 1)}
+    material.onBeforeCompile = (shader: any) => {
+      shader.uniforms.outlineWidth = uniform
+      shader.vertexShader = shader.vertexShader
+        .replace('void main() {', 'uniform float outlineWidth;\nvoid main() {')
+        .replace('#include <begin_vertex>',
+          '#include <begin_vertex>\n\ttransformed += normalize(normal) * outlineWidth;')
+    }
+    const outline = new THREE.Mesh(mesh.geometry, material)
+    outline.name = `${mesh.name}#outline`
+    outline.frustumCulled = false
+    outline.castShadow = false
+    outline.receiveShadow = false
+    if (mesh.morphTargetInfluences) {
+      outline.updateMorphTargets()
+      outline.morphTargetInfluences = mesh.morphTargetInfluences
+    }
+    // Follows the mesh: same matrix (child), same geometry, swapped when the mesh's is.
+    outline.onBeforeRender = () => {
+      if (outline.geometry !== mesh.geometry) {
+        outline.geometry = mesh.geometry
+      }
+    }
+    mesh.add(outline)
+    outlines.push(outline)
+  }
+  return outlines
+}

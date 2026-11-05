@@ -1,6 +1,6 @@
 import * as ecs from '@8thwall/ecs'
 import appleBinUrl from '../assets/apple/apple.bin'
-import {parseApple, createAppleScene} from './apple-scene'
+import {parseApple, createAppleScene, addOutlines} from './apple-scene'
 
 // Apple, first case of the BD: the case is a window onto a box dug into the page.
 // Target space: the case (the opening of the Cube of Apple_GLB.c4d, 7 x 7 m) is the 1 x 1
@@ -19,6 +19,15 @@ const SUN_POSITION = [0.1, 2, 0.4]     // target space, high above the box (C4D 
 const SUN_TARGET = [0, -0.5, -0.43]    // centre of the floor
 const FILL_INTENSITY = 0.3   // plus the Muse space's own ambient + directional (0.15 each)
 const SHADOW_HALF = 0.8
+// Toon outline around the characters (not the whiskers, apples, bubble or box); ?contour=0 turns
+// it off, ?contour=<n> sets its width in thousandths of the case width.
+const OUTLINE_WIDTH = 0.0025
+const outlineWidth = () => {
+  const v = new URLSearchParams(window.location.search).get('contour')
+  return v === null ? OUTLINE_WIDTH : Number(v) / 1000
+}
+const hasOutline = (name: string) => (name === 'deform' || name.startsWith('/charact')) &&
+  !name.includes('pomme') && !name.includes('moustache')
 
 type State = {
   ready: boolean
@@ -103,6 +112,10 @@ const setup = (world: ecs.World, eid: ecs.Eid, state: State) => {
       } else if (mesh.name.startsWith('/Bulle1')) {
         mesh.castShadow = false   // the speech bubble casts no shadow in the C4D render
       }
+    }
+    const width = outlineWidth()
+    if (width > 0) {
+      addOutlines(THREE, scene, width, hasOutline)
     }
     stage.add(scene.group)
     world.three.notifyChanged(stage)
