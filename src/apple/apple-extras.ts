@@ -12,11 +12,12 @@ declare const THREE: any
 const TARGET_NAME = 'cible_apple'
 const OCCLUDER_HALF = 6                // image widths; covers the page around the case
 const BORDER = 0.006                   // black line around the case, as on the print
-const BOX_EMISSIVE = 0.55              // walls stay near white, as in the C4D render
-const SUN_INTENSITY = 0.7
+const BOX_COLOR = 0.4                   // lit part of the walls
+const BOX_EMISSIVE = 0.45              // walls stay near white, as in the C4D render
+const SUN_INTENSITY = 0.55
 const SUN_POSITION = [0.1, 2, 0.4]     // target space, high above the box (C4D Light)
 const SUN_TARGET = [0, -0.5, -0.43]    // centre of the floor
-const FILL_INTENSITY = 0.55
+const FILL_INTENSITY = 0.3   // plus the Muse space's own ambient + directional (0.15 each)
 const SHADOW_HALF = 0.8
 
 type State = {
@@ -95,7 +96,7 @@ const setup = (world: ecs.World, eid: ecs.Eid, state: State) => {
     for (const mesh of scene.meshes) {
       if (mesh.name === 'apple_box') {
         mesh.material = new THREE.MeshLambertMaterial({
-          color: 0xffffff,
+          color: new THREE.Color().setScalar(BOX_COLOR),
           emissive: new THREE.Color().setScalar(BOX_EMISSIVE),
           side: THREE.DoubleSide,
         })

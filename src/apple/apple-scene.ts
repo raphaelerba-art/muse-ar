@@ -24,8 +24,11 @@ export const createAppleScene = (THREE: any, data: any, options: any = {}) => {
   const {blob} = data
   const lit = options.lit !== false
   const materials = data.materials.map(({color, emissive}: any) => {
+    // C4D adds luminance on top of the lit colour; keep the sum below 1 so whites do not clip
+    // (the engine renders without tone mapping) and the shading stays visible.
+    const keep = 1 - Math.max(...emissive)
     const params = {
-      color: new THREE.Color(...color),
+      color: new THREE.Color(...color.map((c: number) => c * keep)),
       emissive: new THREE.Color(...emissive),
       side: THREE.DoubleSide,
     }
