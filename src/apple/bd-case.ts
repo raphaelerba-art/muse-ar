@@ -18,9 +18,9 @@ const SUN_POSITION = [0.1, 2, 0.4]     // target space, high above the box (C4D 
 const SUN_TARGET = [0, -0.5, -0.43]    // centre of the floor
 const FILL_INTENSITY = 0.3   // plus the Muse space's own ambient + directional (0.15 each)
 const SHADOW_HALF = 0.8
-// Toon outline around everything but the bubble, the whiskers and the box; ?contour=0 turns
-// it off, ?contour=<n> sets its width in thousandths of the case width.
-const OUTLINE_WIDTH = 0.0025
+// Toon outline around everything but the bubble, the whiskers and the box: off (Raphael's
+// choice); ?contour=<n> brings it back to try, width in thousandths of the case width (2.5 was used).
+const OUTLINE_WIDTH = 0
 const outlineWidth = () => {
   const v = new URLSearchParams(window.location.search).get('contour')
   return v === null ? OUTLINE_WIDTH : Number(v) / 1000
@@ -38,25 +38,8 @@ type State = {
   root?: any
 }
 
-// The cases look alike (same box, same cats), so the tracker can find two of them on one print.
-// Two prints side by side both play; two cases found at the same place are one print seen twice,
-// and only the first one found shows there.
+// Cases found in view: each one plays on its own print, several at the same time.
 const found = new Set<string>()
-const where = new Map<string, any>()    // target -> world position of its case
-const OVERLAP = 0.5                     // image widths between two centres for the same print
-
-const visibleAt = (target: string, pos: any, width: number) => {
-  for (const other of found) {
-    if (other === target) {
-      return true
-    }
-    const p = where.get(other)
-    if (p && p.distanceTo(pos) < OVERLAP * width) {
-      return false
-    }
-  }
-  return false
-}
 
 const square = (half: number) => {
   const path = new THREE.Shape()
@@ -192,14 +175,12 @@ export const registerBdCase = (name: string, target: string, binUrl: string, box
       world.events.addListener(world.events.globalId, 'reality.imagelost', (e: any) => {
         if (e.data?.name === target) {
           found.delete(target)
-          where.delete(target)
         }
       })
     },
     remove: (world, component) => {
       states.delete(component.eid)
       found.delete(target)
-      where.delete(target)
     },
     tick: (world, component) => {
       const state = states.get(component.eid)
@@ -214,12 +195,7 @@ export const registerBdCase = (name: string, target: string, binUrl: string, box
       }
       fitShadow(state)
       const {root} = state
-      root.updateWorldMatrix(true, false)
-      const pos = (where.get(target) || new THREE.Vector3()).setFromMatrixPosition(root.matrixWorld)
-      if (found.has(target)) {
-        where.set(target, pos)
-      }
-      const on = found.has(target) && visibleAt(target, pos, root.matrixWorld.getMaxScaleOnAxis())
+      const on = found.has(target)
       if (on !== state.playing) {
         if (on) {
           state.time = 0
