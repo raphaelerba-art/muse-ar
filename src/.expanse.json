@@ -2185,7 +2185,8 @@
       },
       "imageTarget": {
         "name": "cible_tremplin"
-      }
+      },
+      "hidden": false
     },
     "acc4474c-db60-454b-9371-b8d087057462": {
       "id": "acc4474c-db60-454b-9371-b8d087057462",
@@ -2223,6 +2224,41 @@
         "castShadow": true,
         "receiveShadow": false
       }
+    },
+    "d6b8ac27-4054-43a7-af5a-43dbbec8a98d": {
+      "id": "d6b8ac27-4054-43a7-af5a-43dbbec8a98d",
+      "name": "Apple Target",
+      "parentId": "ea848c78-a09d-4bbe-adfb-93abe9639bdb",
+      "order": 5,
+      "position": [
+        4,
+        2,
+        -1.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "geometry": null,
+      "material": null,
+      "components": {
+        "b8af2b46-aaad-41f0-b8c1-4c5b12a875d4": {
+          "id": "b8af2b46-aaad-41f0-b8c1-4c5b12a875d4",
+          "name": "Apple Extras",
+          "parameters": {}
+        }
+      },
+      "imageTarget": {
+        "name": "cible_apple"
+      },
+      "hidden": false
     }
   },
   "spaces": {
@@ -2290,6 +2326,13 @@
       "reflections": {
         "type": "url",
         "url": "https://cdn.8thwall.com/web/assets/envmap/basic_env_map-m9hqpneh.jpg"
+      },
+      "sky": {
+        "type": "gradient",
+        "colors": [
+          "#222222",
+          "#222222"
+        ]
       }
     }
   },

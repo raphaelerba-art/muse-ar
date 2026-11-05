@@ -1,0 +1,24 @@
+{
+    "imagePath": "image-targets/cible_apple_luminance.png",
+    "resources": {
+        "originalImage": "cible_apple_original.png",
+        "croppedImage": "cible_apple_cropped.png",
+        "thumbnailImage": "cible_apple_thumbnail.png",
+        "luminanceImage": "cible_apple_luminance.png"
+    },
+    "name": "cible_apple",
+    "type": "PLANAR",
+    "properties": {
+        "top": 0,
+        "left": 135,
+        "width": 810,
+        "height": 1080,
+        "isRotated": false,
+        "originalWidth": 1080,
+        "originalHeight": 1080
+    },
+    "loadAutomatically": true,
+    "created": 1793889000000,
+    "updated": 1793889000000,
+    "metadata": null
+}
