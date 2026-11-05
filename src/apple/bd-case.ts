@@ -10,8 +10,9 @@ declare const THREE: any
 
 const OCCLUDER_HALF = 6                // image widths; covers the page around the case
 const BORDER = 0.006                   // black line around the case, as on the print
-const BOX_COLOR = 0.4                   // lit part of the walls
-const BOX_EMISSIVE = 0.45              // walls stay near white, as in the C4D render
+// Walls in the background colour of the print: that share of it glows, the rest is lit, so the
+// walls read as the print's flat colour with a little shading and the characters' shadows.
+const BOX_GLOW = 0.6
 const SUN_INTENSITY = 0.55
 const SUN_POSITION = [0.1, 2, 0.4]     // target space, high above the box (C4D Light)
 const SUN_TARGET = [0, -0.5, -0.43]    // centre of the floor
@@ -94,7 +95,8 @@ const addFill = (world: ecs.World) => {
   world.three.notifyChanged(fill)
 }
 
-const setup = (world: ecs.World, eid: ecs.Eid, state: State, binUrl: string, label: string) => {
+const setup = (world: ecs.World, eid: ecs.Eid, state: State, binUrl: string, label: string,
+  boxColor: string) => {
   const stage = world.three.entityToObject.get(eid)
   if (!stage) {
     return
@@ -135,9 +137,10 @@ const setup = (world: ecs.World, eid: ecs.Eid, state: State, binUrl: string, lab
     const scene = createAppleScene(THREE, parseApple(buffer))
     for (const mesh of scene.meshes) {
       if (mesh.name === 'apple_box') {
+        const wall = new THREE.Color(boxColor)   // sRGB hex, as in the image
         mesh.material = new THREE.MeshLambertMaterial({
-          color: new THREE.Color().setScalar(BOX_COLOR),
-          emissive: new THREE.Color().setScalar(BOX_EMISSIVE),
+          color: wall.clone().multiplyScalar(1 - BOX_GLOW),
+          emissive: wall.clone().multiplyScalar(BOX_GLOW),
           side: THREE.DoubleSide,
         })
       } else if (mesh.name.startsWith('/Bulle1')) {
@@ -171,7 +174,7 @@ const fitShadow = (state: State) => {
 }
 
 // One component per case: `name` goes on the entity that carries the image target `target`.
-export const registerBdCase = (name: string, target: string, binUrl: string) => {
+export const registerBdCase = (name: string, target: string, binUrl: string, boxColor: string) => {
   const states = new Map<ecs.Eid, State>()
   ecs.registerComponent({
     name,
@@ -204,7 +207,7 @@ export const registerBdCase = (name: string, target: string, binUrl: string) => 
         return
       }
       if (!state.ready) {
-        setup(world, component.eid, state, binUrl, name)
+        setup(world, component.eid, state, binUrl, name, boxColor)
         if (!state.ready) {
           return
         }
