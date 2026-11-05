@@ -1,12 +1,14 @@
 import * as ecs from '@8thwall/ecs'
 import animBinUrl from '../assets/tremplin/tremplin_anim.bin'
 import sweepsBinUrl from '../assets/tremplin/tremplin_sweeps.bin'
+import backgroundUrl from '../assets/tremplin/fond.png'
 import {
   parseAnimation, parseSweeps, applySweeps, VertexAnimation, SweepAnimation,
 } from '../muse/muse-extras'
 
 // Tremplin (seesaw) in front of its image target, as laid out in tremplin.c4d: the image is the
-// wall (Plane.1, 8.45 m wide, hidden here behind a white panel) and the ground (Plane, 8.45 x
+// wall (Plane.1, 8.45 m wide, covered here by fond.png: balance-IMG without the silhouettes,
+// same layout, so it sits exactly over the tracked image) and the ground (Plane, 8.45 x
 // 4.22 m) leaves its bottom edge at 90°, opaque white with rounded front corners.
 // Target space: the full square image is 1 x 1, +Z out of it. The entity holding tremplin.glb
 // maps the C4D scene onto it: no rotation, scale 1/8.45, wall centre on the target's centre.
@@ -78,11 +80,21 @@ const setup = (world: ecs.World, eid: ecs.Eid, tremplinEid: ecs.Eid, state: Stat
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
-  // White panel hiding the image.
+  // White behind the panel, down to the ground (it sits just below the image's bottom edge).
   const white = new THREE.MeshBasicMaterial({color: 0xffffff, toneMapped: false})
   const wall = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.5 - GROUND_Y), white)
   wall.position.set(0, (0.5 + GROUND_Y) / 2, 0.001)
   stage.add(wall)
+
+  const background = new THREE.TextureLoader().load(backgroundUrl)
+  background.colorSpace = THREE.SRGBColorSpace
+  background.anisotropy = renderer.capabilities.getMaxAnisotropy()
+  const panel = new THREE.Mesh(
+    new THREE.PlaneGeometry(1, 1),
+    new THREE.MeshBasicMaterial({map: background, toneMapped: false})
+  )
+  panel.position.z = 0.002
+  stage.add(panel)
 
   // White ground, perpendicular to the image, with the shadow drawn just above it.
   const geometry = groundShape()
