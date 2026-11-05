@@ -5,22 +5,30 @@ import {
   parseAnimation, parseSweeps, applySweeps, VertexAnimation, SweepAnimation,
 } from '../muse/muse-extras'
 
-// Tremplin (seesaw) standing on its image target: the image is the ground, kept invisible,
-// only the shadow is drawn on it. Target space: the full square image is 1 x 1, +Z out of it.
-// The entity holding tremplin.glb maps the C4D scene onto it (rotX +90°, scale 1/8: 8 m = image).
+// Tremplin (seesaw) in front of its image target, as laid out in tremplin.c4d: the image is the
+// wall (Plane.1, 8.45 m wide, hidden here behind a white panel) and the ground (Plane, 8.45 x
+// 4.22 m) leaves its bottom edge at 90°, transparent with only the shadow drawn on it.
+// Target space: the full square image is 1 x 1, +Z out of it. The entity holding tremplin.glb
+// maps the C4D scene onto it: no rotation, scale 1/8.45, wall centre on the target's centre.
 
 declare const THREE: any
 
 const CLIP_DURATION = 6        // seconds, tremplin.c4d frames 0-180 @ 30 fps
 const SHADOW_OPACITY = 0.45  // tremplin.c4d Light: shadow density 50 %
-const CATCHER_SIZE = 2         // image widths; the jumps throw shadows past the image edges
+const SCENE_SCALE = 1 / 8.45
+const GROUND_Y = -4.25 * SCENE_SCALE   // target space, ground level
+const GROUND_Z = 2.1 * SCENE_SCALE     // target space, centre of the ground and of the seesaw
+const GROUND_SIZE = [1, 0.5]
+const SHADOW_HALF = 0.8                // image widths, half size of the shadow frustum
 // Shading close to the Standard render of tremplin.c4d: its infinite Light (nearly overhead,
-// tilted toward the image top) as a strong shadow-casting sun, a soft sky/ground fill standing in
-// for GI + AO, weak scene lights (Muse space: ambient 0.15, directional 0.15) and no reflections.
+// coming from behind the wall) as a strong shadow-casting sun, sky/ground and front fills standing
+// in for GI + AO, weak scene lights (Muse space: ambient 0.15, directional 0.15), no reflections.
 // The engine renders without tone mapping, so whites are toned down to stay below clipping.
 const SUN_INTENSITY = 1.4
-const SUN_POSITION = [0, 0.52, 1.93]   // target space; = -direction of the C4D Light
+const SUN_DIRECTION = [0, 0.966, -0.259]   // target space; = -direction of the C4D Light
+const SUN_DISTANCE = 2
 const FILL_INTENSITY = 0.6
+const FRONT_INTENSITY = 0.8
 const WHITE = 0.7                      // linear; lit whites (~0.86 sRGB)
 const SELF_LIT = 0.8                   // linear; self-lit trails and brush hair
 const ROUGHNESS = 0.95
@@ -52,26 +60,40 @@ const setup = (world: ecs.World, eid: ecs.Eid, tremplinEid: ecs.Eid, state: Stat
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
-  // Transparent ground on the image: only the shadow shows.
+  // White panel hiding the image.
+  const wall = new THREE.Mesh(
+    new THREE.PlaneGeometry(1, 1),
+    new THREE.MeshBasicMaterial({color: 0xffffff, toneMapped: false})
+  )
+  wall.position.z = 0.001
+  stage.add(wall)
+
+  // Transparent ground, perpendicular to the image: only the shadow shows.
   const catcher = new THREE.Mesh(
-    new THREE.PlaneGeometry(CATCHER_SIZE, CATCHER_SIZE),
+    new THREE.PlaneGeometry(...GROUND_SIZE),
     new THREE.ShadowMaterial({opacity: SHADOW_OPACITY})
   )
-  catcher.position.z = 0.001
+  catcher.rotation.x = -Math.PI / 2
+  catcher.position.set(0, GROUND_Y + 0.001, GROUND_Z)
   catcher.receiveShadow = true
   stage.add(catcher)
 
-  // Sun high above the image; its frustum is refitted to the target's world scale each frame.
+  // Its frustum is refitted to the target's world scale each frame.
   const sun = new THREE.DirectionalLight(0xffffff, SUN_INTENSITY)
-  sun.position.set(...SUN_POSITION)
-  sun.target.position.set(0, 0, 0)
+  sun.target.position.set(0, -0.1, GROUND_Z)
+  sun.position.set(...SUN_DIRECTION).multiplyScalar(SUN_DISTANCE).add(sun.target.position)
   sun.castShadow = true
   sun.shadow.mapSize.set(1024, 1024)   // lower resolution = softer edges
   sun.shadow.bias = -0.0005
   stage.add(sun, sun.target)
   state.sun = sun
 
-  // Sky / ground fill along the world's up axis (the image lies on a table).
+  // Fill on the side facing the viewer: the sun comes from behind the wall.
+  const front = new THREE.DirectionalLight(0xffffff, FRONT_INTENSITY)
+  front.position.set(0.5, 0.6, 2)
+  stage.add(front, front.target)
+
+  // Sky / ground fill along the world's up axis (the image stands upright).
   const fill = new THREE.HemisphereLight(0xffffff, 0x808080, FILL_INTENSITY)
   fill.position.set(0, 1, 0)
   world.three.scene.add(fill)
@@ -113,7 +135,7 @@ const fitShadow = (state: State) => {
     return
   }
   state.shadowScale = k
-  const half = 0.5 * CATCHER_SIZE * k
+  const half = SHADOW_HALF * k
   Object.assign(sun.shadow.camera, {
     left: -half, right: half, top: half, bottom: -half, near: 0.1 * k, far: 5 * k,
   })
