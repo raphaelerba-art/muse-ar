@@ -10,15 +10,15 @@
     "type":  "PLANAR",
     "properties":  {
                        "top":  0,
-                       "left":  128,
-                       "width":  768,
-                       "height":  1024,
+                       "left":  250,
+                       "width":  1500,
+                       "height":  2000,
                        "isRotated":  false,
-                       "originalWidth":  1024,
-                       "originalHeight":  1024
+                       "originalWidth":  2000,
+                       "originalHeight":  2000
                    },
     "loadAutomatically":  true,
-    "created":  1793719546981,
-    "updated":  1793719546981,
+    "created":  1793872396624,
+    "updated":  1793872396624,
     "metadata":  null
 }
